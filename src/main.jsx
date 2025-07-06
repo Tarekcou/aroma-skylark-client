@@ -16,6 +16,7 @@ import { BookProvider } from './context/BookContext.jsx';
 import PrivateRoute from './routes/PrivateRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import MembersPage from './pages/MembersPage.jsx';
+import Installment from './components/Installment.jsx';
 
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
     children: [
       { path: "", element: <BookList /> },
       { path: "members", element: <MembersPage /> },
+      { path: "installment", element: <Installment /> },
 
       {
         path: ":bookName/:id",

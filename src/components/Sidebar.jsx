@@ -19,6 +19,10 @@ const Sidebar = () => {
           <NavLink to={"/dashboard/members"}>Members</NavLink>
         </a>
         <a className="flex items-center space-x-2">
+          <span className="text-green-500">➕</span>
+          <NavLink to={"/dashboard/installment"}>Installment</NavLink>
+        </a>
+        <a className="flex items-center space-x-2">
           <FaCog />
           <span>Business Settings</span>
         </a>

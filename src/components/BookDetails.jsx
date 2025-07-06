@@ -86,7 +86,7 @@ const entries = Array.isArray(book?.entries) ? book.entries : [];
           >
             📋 Transactions
           </Link>
-          <Link
+          {/* <Link
             to="cashin"
             role="tab"
             className={`px-4 py-2 rounded-t-md transition-colors duration-200 ${
@@ -96,7 +96,7 @@ const entries = Array.isArray(book?.entries) ? book.entries : [];
             }`}
           >
             ➕ Cash In
-          </Link>
+          </Link> */}
           <Link
             to="cashout"
             role="tab"

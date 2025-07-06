@@ -1,11 +1,12 @@
+// ✅ MembersPage.jsx
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import MemberModal from "./MemberModal";
 import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
+import MemberModal from "./MemberModal";
 
 const MembersPage = () => {
-  const [modalData, setModalData] = useState(undefined); // not null
+  const [modalData, setModalData] = useState(null);
   const queryClient = useQueryClient();
 
   const { data: members = [], isLoading } = useQuery({
@@ -22,7 +23,6 @@ const MembersPage = () => {
       toast.success("Member deleted");
       queryClient.invalidateQueries(["members"]);
     },
-    onError: () => toast.error("Delete failed"),
   });
 
   const handleDelete = (id) => {
@@ -34,17 +34,16 @@ const MembersPage = () => {
   return (
     <div className="space-y-4 p-4">
       <div className="flex justify-between items-center">
-        <h2 className="font-semibold text-xl">👥 Members List</h2>
-        <button className="btn btn-primary" onClick={() => setModalData(null)}>
-          + Add New Member
+        <h2 className="font-bold text-xl">👥 Members</h2>
+        <button onClick={() => setModalData({})} className="btn btn-primary">
+          + Add Member
         </button>
       </div>
 
-      {/* Table */}
       <div className="bg-white shadow rounded overflow-x-auto">
         <table className="table table-zebra w-full">
           <thead>
-            <tr className="bg-base-200 text-sm">
+            <tr className="bg-base-200">
               <th>#</th>
               <th>Name</th>
               <th>Phone</th>
@@ -54,46 +53,35 @@ const MembersPage = () => {
             </tr>
           </thead>
           <tbody>
-            {members.map((m, idx) => (
+            {members.map((m, i) => (
               <tr key={m._id}>
-                <td>{idx + 1}</td>
+                <td>{i + 1}</td>
                 <td>{m.name}</td>
                 <td>{m.phone}</td>
                 <td>{m.email}</td>
                 <td>{m.role}</td>
                 <td>
-                  <div className="flex gap-2">
-                    <button
-                      className="btn-outline btn btn-sm"
-                      onClick={() => setModalData(m)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="text-white btn btn-sm btn-error"
-                      onClick={() => handleDelete(m._id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  <button
+                    className="btn-outline btn btn-sm"
+                    onClick={() => setModalData(m)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="ml-2 btn btn-error btn-sm"
+                    onClick={() => handleDelete(m._id)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-
-        {isLoading && <p className="p-4 text-center">Loading members...</p>}
-        {!isLoading && members.length === 0 && (
-          <p className="p-4 text-gray-500 text-center">No members yet.</p>
-        )}
       </div>
 
-      {/* Modal */}
-      {modalData !== undefined && (
-        <MemberModal
-          data={modalData}
-          closeModal={() => setModalData(undefined)}
-        />
+      {modalData && (
+        <MemberModal data={modalData} closeModal={() => setModalData(null)} />
       )}
     </div>
   );
