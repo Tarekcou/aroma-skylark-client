@@ -9,14 +9,16 @@ import Dashboard from './pages/Dashboard.jsx';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import BookDetails from './components/BookDetails.jsx';
-import BookList from './components/BookList.jsx';
 import NotFound from './components/NotFound.jsx';
-import TransactionForm from './components/TransactionForm.jsx';
+// import TransactionForm from './components/TransactionForm.jsx';
 import { BookProvider } from './context/BookContext.jsx';
 import PrivateRoute from './routes/PrivateRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import MembersPage from './pages/MembersPage.jsx';
 import Installment from './components/Installment.jsx';
+import DashboardTab from './components/DashboardTab.jsx';
+import CategoryList from './components/CategoryList.jsx';
+import CategoryTransactions from './components/CategoryTransactions.jsx';
 
 
 const queryClient = new QueryClient();
@@ -27,30 +29,24 @@ const router = createBrowserRouter([
     element: <StartPage />,
     errorElement: <NotFound />, // 404 for root-level
   },
-  {
-    path: "/dashboard",
-    element: (
-      <PrivateRoute>
-        <Dashboard />
-      </PrivateRoute>
-    ),
-    children: [
-      { path: "", element: <BookList /> },
-      { path: "members", element: <MembersPage /> },
-      { path: "installment", element: <Installment /> },
-
-      {
-        path: ":bookName/:id",
-        element: <BookDetails />,
-        children: [
-          { path: "cashin", element: <TransactionForm type="cash-in" /> },
-          { path: "cashout", element: <TransactionForm type="cash-out" /> },
-          { path: "transactions", element: null },
-        ],
-      },
-      { path: "*", Component: NotFound }, // ✅ catch-all for child routes
-    ],
-  },
+ {
+  path: "/dashboard",
+  element: (
+    <PrivateRoute>
+      <Dashboard />
+    </PrivateRoute>
+  ),
+  children: [
+    { index: true, element: <DashboardTab /> },
+    { path: "categories", element: <DashboardTab />, 
+      children: [
+        { index: true, element: <></> }, // You can leave empty or render null
+        { path: ":categoryName", element: <CategoryTransactions /> },
+      ]
+    },
+  ]
+}
+,
   {
     path: "*",
     Component: NotFound, // ✅ catch-all for any unknown top-level route

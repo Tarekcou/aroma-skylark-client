@@ -2,14 +2,18 @@ import React, { useMemo, useState } from "react";
 import { FaSearch, FaUndo, FaFilePdf } from "react-icons/fa";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import TransactionFormModal from "./TransactionFormModal";
+import axiosPublic from "../axios/AxiosPublic";
+import toast from "react-hot-toast";
 
 const ITEMS_PER_PAGE = 10;
 
-const TransactionList = ({ entries = [] } ) => {
+const AllTransactionList = ({ entries = [] } ) => {
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDate, setSelectedDate] = useState("");
   const [page, setPage] = useState(1);
+  const [editEntry, setEditEntry] = useState(null); // ✅ for editing modal
 
   // Unique categories
   const categories = useMemo(() => {
@@ -52,7 +56,9 @@ const TransactionList = ({ entries = [] } ) => {
   const handleEdit = (entry) => {
     // TODO: Open a modal or navigate to edit form
     console.log("Editing entry:", entry);
-    alert("Edit not implemented yet. Entry ID: " + entry._id);
+    // alert("Edit not implemented yet. Entry ID: " + entry._id);
+      setEditEntry(entry);
+
   };
 
   const handleDelete = async (id) => {
@@ -60,15 +66,13 @@ const TransactionList = ({ entries = [] } ) => {
     if (!confirm) return;
 
     try {
-      await axiosPublic.delete(`/${bookName}/entries/${id}`);
+      await axiosPublic.delete(`/entries/${id}`);
       toast.success("Entry deleted");
       // onDeleteSuccess?.(); // ✅ trigger parent refetch
     } catch (err) {
       toast.error("Failed to delete entry");
     }
   };
-
-
 
   // Export to PDF
   const exportToPDF = () => {
@@ -245,6 +249,18 @@ const TransactionList = ({ entries = [] } ) => {
             No entries found for the selected filter.
           </p>
         )}
+
+        {editEntry && (
+          <TransactionFormModal
+            isModal={true}
+            entry={editEntry}
+            closeModal={() => setEditEntry(null)}
+            onSuccess={() => {
+              setEditEntry(null);
+              // Optional: refetch entries
+            }}
+          />
+        )}
       </div>
 
       {/* Pagination Controls */}
@@ -273,4 +289,4 @@ const TransactionList = ({ entries = [] } ) => {
   );
 };
 
-export default TransactionList;
+export default AllTransactionList;

@@ -1,10 +1,11 @@
 import React from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
-import BookList from "../components/BookList";
+import BookList from "../components/CategoryList";
 import { Outlet } from "react-router";
 
 const Dashboard = () => {
+
   return (
     <div className="flex bg-gray-50 min-h-screen">
       <Sidebar />

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FaSearch, FaPlus, FaMinus, FaEquals } from "react-icons/fa";
 import axiosPublic from "../axios/AxiosPublic";
 import { Link, Outlet, useLocation, useParams } from "react-router";
-import TransactionList from "./TransactionList";
+import TransactionList from "./AllTransactionList";
 
 
 const BookDetails = () => {

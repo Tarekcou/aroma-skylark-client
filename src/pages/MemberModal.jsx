@@ -15,7 +15,7 @@ const MemberModal = ({ data, closeModal }) => {
       name: "",
       phone: "",
       email: "",
-      role: "",
+      subscription: "",
     },
   });
 
@@ -23,8 +23,9 @@ const MemberModal = ({ data, closeModal }) => {
 
   const mutation = useMutation({
     mutationFn: async (formData) => {
+      console.log(data?._id, formData);
       if (data?._id) {
-        return await axiosPublic.put(`/members/${data._id}`, formData);
+        return await axiosPublic.patch(`/members/${data._id}`, formData);
       }
       return await axiosPublic.post("/members", formData);
     },
@@ -36,7 +37,10 @@ const MemberModal = ({ data, closeModal }) => {
     onError: () => toast.error("Failed to save"),
   });
 
-  const onSubmit = (formData) => mutation.mutate(formData);
+const onSubmit = (formData) => {
+  const { _id, ...payload } = formData;
+  mutation.mutate(payload);
+};
 
   return (
     <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/40 bg-opacity-30">
@@ -62,8 +66,9 @@ const MemberModal = ({ data, closeModal }) => {
             className="input-bordered w-full input"
           />
           <input
-            {...register("role")}
-            placeholder="Role"
+            {...register("subscription")}
+            placeholder="Subscription Amount"
+            defaultValue={250000}
             className="input-bordered w-full input"
           />
           <div className="flex justify-between">

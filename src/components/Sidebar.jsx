@@ -8,30 +8,30 @@ const Sidebar = () => {
       <h2 className="font-bold text-primary text-2xl">Aroma Skylark</h2>
       <nav className="space-y-2">
         <div className="font-semibold text-gray-500 text-sm">Book Keeping</div>
-        <a className="flex items-center space-x-2 font-medium text-blue-600">
+        <div className="flex items-center space-x-2 font-medium text-blue-600">
           <FaBook />
           <NavLink to={"/dashboard"}>Dashboard</NavLink>
-        </a>
+        </div>
 
         <div className="mt-4 font-semibold text-gray-500 text-sm">Settings</div>
-        <a className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
           <FaUsers />
           <NavLink to={"/dashboard/members"}>Members</NavLink>
-        </a>
-        <a className="flex items-center space-x-2">
+        </div>
+        <div className="flex items-center space-x-2">
           <span className="text-green-500">➕</span>
           <NavLink to={"/dashboard/installment"}>Installment</NavLink>
-        </a>
-        <a className="flex items-center space-x-2">
+        </div>
+        <div className="flex items-center space-x-2">
           <FaCog />
           <span>Business Settings</span>
-        </a>
+        </div>
 
         <div className="mt-4 font-semibold text-gray-500 text-sm">Others</div>
-        <a className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2">
           <FaQuestionCircle />
           <span>Help & Support</span>
-        </a>
+        </div>
       </nav>
     </aside>
   );
