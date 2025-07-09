@@ -18,10 +18,12 @@ const InstallmentEditModal = ({ member, installments, close }) => {
   const mutation = useMutation({
     mutationFn: async (updated) =>
       await axiosPublic.patch(`/members/${member._id}`, updated),
+    
     onSuccess: () => {
       toast.success("Installment updated");
       queryClient.invalidateQueries(["members"]);
       close();
+      console.log(updated,formData)
     },
     onError: () => toast.error("Update failed"),
   });

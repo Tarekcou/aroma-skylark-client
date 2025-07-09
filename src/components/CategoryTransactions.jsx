@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import axiosPublic from "../axios/AxiosPublic";
@@ -9,19 +9,24 @@ const CategoryTransactions = () => {
   const { categoryName } = useParams();
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Fetch all entries (not just by category)
   const {
-    data: entries = [],
+    data: allEntries = [],
     isLoading,
     isError,
     refetch,
   } = useQuery({
-    queryKey: ["entries-by-category", categoryName],
+    queryKey: ["entries"],
     queryFn: async () => {
-      const res = await axiosPublic.get(`/entries?category=${categoryName}`);
-      console.log("Fetched entries for category:", categoryName, res.data);
+      const res = await axiosPublic.get("/entries");
       return res.data?.entries || [];
     },
   });
+
+  // Memoized filtered entries by category
+  const entries = useMemo(() => {
+    return allEntries.filter((e) => e.category === categoryName);
+  }, [allEntries, categoryName]);
 
   return (
     <div className="mt-4">

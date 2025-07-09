@@ -44,6 +44,8 @@ const router = createBrowserRouter([
         { path: ":categoryName", element: <CategoryTransactions /> },
       ]
     },
+    {path:"members", element: <MembersPage /> },
+    {path:"installment", element: <Installment /> }
   ]
 }
 ,

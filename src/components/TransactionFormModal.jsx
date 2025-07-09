@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router";
@@ -11,13 +11,40 @@ const TransactionFormModal = ({
   closeModal,
   onSuccess,
   entry,
+  entries: propEntries = [],
 }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const [entries, setEntries] = useState(propEntries);
   const [newCategory, setNewCategory] = useState("");
   const [newField, setNewField] = useState("");
+  const [customCategories, setCustomCategories] = useState([]);
+  const [customFields, setCustomFields] = useState([]);
+
+  const { data: fetchedEntries = [] } = useQuery({
+    queryKey: ["entries"],
+    queryFn: async () => {
+      const res = await axiosPublic.get("/entries");
+      return res.data.entries || [];
+    },
+    enabled: propEntries.length === 0,
+  });
+
+  useEffect(() => {
+    setEntries(propEntries.length > 0 ? propEntries : fetchedEntries);
+  }, [propEntries, fetchedEntries]);
+
+  const allCategories = useMemo(() => {
+    const existing = entries.map((e) => e.category).filter(Boolean);
+    return [...new Set([...existing, ...customCategories])];
+  }, [entries, customCategories]);
+
+  const allFields = useMemo(() => {
+    const existing = entries.map((e) => e.extraField).filter(Boolean);
+    return [...new Set([...existing, ...customFields])];
+  }, [entries, customFields]);
 
   const {
     register,
@@ -39,19 +66,22 @@ const TransactionFormModal = ({
     },
   });
 
-  // ✅ FETCH CATEGORIES
-  const { data: categories = [], refetch: refetchCategories } = useQuery({
-    queryKey: ["categories"],
-    queryFn: async () => (await axiosPublic.get(`/categories`)).data,
-  });
+  const handleAddCategory = () => {
+    const trimmed = newCategory.trim();
+    if (trimmed && !allCategories.includes(trimmed)) {
+      setCustomCategories((prev) => [...prev, trimmed]);
+      setNewCategory("");
+    }
+  };
 
-  // ✅ FETCH FIELDS
-  const { data: fields = [], refetch: refetchFields } = useQuery({
-    queryKey: ["fields"],
-    queryFn: async () => (await axiosPublic.get(`/fields`)).data,
-  });
+  const addField = () => {
+    const trimmed = newField.trim();
+    if (trimmed && !allFields.includes(trimmed)) {
+      setCustomFields((prev) => [...prev, trimmed]);
+      setNewField("");
+    }
+  };
 
-  // ✅ SUBMIT FORM (Create or Update)
   const mutation = useMutation({
     mutationFn: async (data) => {
       if (entry?._id) {
@@ -62,29 +92,16 @@ const TransactionFormModal = ({
     onSuccess: () => {
       toast.success("Transaction saved");
       queryClient.invalidateQueries();
-      if (onSuccess) onSuccess();
-      if (closeModal) closeModal();
+      onSuccess?.();
+      closeModal?.();
       reset();
     },
     onError: () => toast.error("Failed to save transaction"),
   });
 
-  const onSubmit = (data) => mutation.mutate(data);
-
-  const addCategory = async () => {
-    if (!newCategory.trim()) return;
-    await axiosPublic.post(`/categories`, { name: newCategory });
-    toast.success("Category added");
-    setNewCategory("");
-    refetchCategories();
-  };
-
-  const addField = async () => {
-    if (!newField.trim()) return;
-    await axiosPublic.post(`/fields`, { name: newField });
-    toast.success("Field added");
-    setNewField("");
-    refetchFields();
+  const onSubmit = (data) => {
+    data.amount = parseFloat(data.amount);
+    mutation.mutate(data);
   };
 
   return (
@@ -118,7 +135,6 @@ const TransactionFormModal = ({
           />
           <input
             type="number"
-            step="0.01"
             className="input-bordered w-full input"
             {...register("amount", { required: true })}
             placeholder="Amount"
@@ -136,38 +152,31 @@ const TransactionFormModal = ({
             placeholder="Contact Name"
           />
 
-          {/* ✅ Category Select */}
           <div>
-            <select
-              className="w-full select-bordered select"
-              {...register("category")}
-            >
+            <select {...register("category")} className="w-full select-bordered select">
               <option value="">Select Category</option>
-              {categories.map((c) => (
-                <option key={c._id} value={c.name}>
-                  {c.name}
-                </option>
+              {allCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
               ))}
             </select>
-
             <div className="flex gap-2 mt-2">
               <input
+                type="text"
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
                 placeholder="New category"
-                className="input-bordered w-full input input-sm"
+                className="input-bordered input input-sm w-full"
               />
               <button
                 type="button"
-                onClick={addCategory}
                 className="btn-outline btn btn-sm"
+                onClick={handleAddCategory}
               >
                 +
               </button>
             </div>
           </div>
 
-          {/* ✅ Mode Select */}
           <select
             className="w-full select-bordered select"
             {...register("mode")}
@@ -179,17 +188,14 @@ const TransactionFormModal = ({
             <option value="Nagad">Nagad</option>
           </select>
 
-          {/* ✅ Extra Field Select */}
           <div>
             <select
               className="w-full select-bordered select"
               {...register("extraField")}
             >
               <option value="">Select Extra Field</option>
-              {fields.map((f) => (
-                <option key={f._id} value={f.name}>
-                  {f.name}
-                </option>
+              {allFields.map((f) => (
+                <option key={f} value={f}>{f}</option>
               ))}
             </select>
             <div className="flex gap-2 mt-2">
@@ -209,7 +215,6 @@ const TransactionFormModal = ({
             </div>
           </div>
 
-          {/* ✅ Buttons */}
           <div className="flex justify-end gap-3">
             {isModal && (
               <button

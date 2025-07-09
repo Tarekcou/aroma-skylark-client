@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
 import InstallmentEditModal from "./InstallmentEditModal";
+import { useEffect } from "react";
 
 const Installment = () => {
-  const [installments, setInstallments] = useState(["1", "2", "3"]);
 const [editMember, setEditMember] = useState(null);
 
   // Get all members
@@ -16,11 +16,33 @@ const [editMember, setEditMember] = useState(null);
       return res.data.members || [];
     },
   });
+  const getInstallmentsFromMember = (member) => {
+  const keys = Object.keys(member);
+  const payments = keys.filter((k) => k.startsWith("payment") && k.endsWith("Amount"));
+  const numbers = payments.map((k) => k.match(/\d+/)?.[0]); // extract numbers
+  const uniqueNumbers = Array.from(new Set(numbers)).sort((a, b) => +a - +b);
+  return uniqueNumbers;
+};
+
+const [installments, setInstallments] = useState([]);
+
+useEffect(() => {
+  if (members.length > 0) {
+    const allNumbers = members.flatMap(getInstallmentsFromMember);
+    const uniqueSorted = Array.from(new Set(allNumbers)).sort((a, b) => +a - +b);
+    setInstallments(uniqueSorted);
+  }
+}, [members]);
+
 
   // Add new installment column dynamically
   const handleAddInstallment = () => {
-    setInstallments((prev) => [...prev, `${prev.length + 1}`]);
-  };
+  const nextNumber = installments.length
+    ? `${Number(installments[installments.length - 1]) + 1}`
+    : "1";
+  setInstallments((prev) => [...prev, nextNumber]);
+};
+
 
   // Sample default value for subscription
   const defaultSubscription = 300000;
