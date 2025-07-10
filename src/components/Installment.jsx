@@ -84,6 +84,7 @@ useEffect(() => {
               ))}
               <th>Total Pmt</th>
               <th>Ind. Due</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>

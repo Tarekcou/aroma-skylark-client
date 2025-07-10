@@ -1,2 +1,6 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+a.active{
+  @apply text-primary border-2 rounded-xl p-2
+}

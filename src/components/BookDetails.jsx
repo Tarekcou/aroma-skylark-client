@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { FaSearch, FaPlus, FaMinus, FaEquals } from "react-icons/fa";
 import axiosPublic from "../axios/AxiosPublic";
 import { Link, Outlet, useLocation, useParams } from "react-router";
-import TransactionList from "./AllTransactionList";
+
+import TransactionListTable from "./TransactionListTable";
 
 
 const BookDetails = () => {
@@ -121,7 +122,7 @@ const entries = Array.isArray(book?.entries) ? book.entries : [];
             No transactions found for this book.
           </p>
         ) : (
-          <TransactionList entries={entries} />
+          <TransactionListTable entries={entries} />
         ))}
     </div>
   );

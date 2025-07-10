@@ -16,6 +16,14 @@ const Sidebar = () => {
         <div className="mt-4 font-semibold text-gray-500 text-sm">Settings</div>
         <div className="flex items-center space-x-2">
           <FaUsers />
+          <NavLink to={"/dashboard/transactions"}>All Transactions</NavLink>
+        </div>
+        <div className="flex items-center space-x-2">
+          <FaUsers />
+          <NavLink to={"/dashboard/categories"}>Category Wise Transactions</NavLink>
+        </div>
+        <div className="flex items-center space-x-2">
+          <FaUsers />
           <NavLink to={"/dashboard/members"}>Members</NavLink>
         </div>
         <div className="flex items-center space-x-2">

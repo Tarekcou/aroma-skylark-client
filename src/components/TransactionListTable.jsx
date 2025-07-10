@@ -5,10 +5,11 @@ import autoTable from "jspdf-autotable";
 import TransactionFormModal from "./TransactionFormModal";
 import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const ITEMS_PER_PAGE = 10;
 
-const AllTransactionList = ({ entries = [] }) => {
+const TransactionListTable = ({ entries = [] , refetch}) => {
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDate, setSelectedDate] = useState("");
@@ -51,10 +52,24 @@ const AllTransactionList = ({ entries = [] }) => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure?")) return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This transaction will be permanently deleted!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
       await axiosPublic.delete(`/entries/${id}`);
       toast.success("Entry deleted");
+
+      // Trigger refetch to refresh the data
+      if (refetch) refetch();
     } catch (err) {
       toast.error("Failed to delete entry");
     }
@@ -81,8 +96,9 @@ const AllTransactionList = ({ entries = [] }) => {
 
   return (
     <div className="space-y-6">
+      
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col text-sm">
           Date:
           <input
@@ -110,10 +126,10 @@ const AllTransactionList = ({ entries = [] }) => {
             ))}
           </select>
         </label>
-        <button className="btn btn-sm btn-outline" onClick={handleReset}>
+        <button className="btn-outline btn btn-sm" onClick={handleReset}>
           <FaUndo className="mr-1" /> Reset
         </button>
-        <button className="btn btn-sm btn-outline" onClick={exportToPDF}>
+        <button className="btn-outline btn btn-sm" onClick={exportToPDF}>
           <FaFilePdf className="mr-1" /> Export PDF
         </button>
       </div>
@@ -122,7 +138,7 @@ const AllTransactionList = ({ entries = [] }) => {
       <div className="flex items-center gap-2">
         <input
           type="text"
-          className="input-bordered input w-full max-w-sm"
+          className="input-bordered w-full max-w-sm input"
           placeholder="Search by remark or amount..."
           value={searchText}
           onChange={(e) => {
@@ -188,7 +204,7 @@ const AllTransactionList = ({ entries = [] }) => {
         </table>
 
         {filteredEntries.length === 0 && (
-          <p className="text-center text-gray-500 my-4">
+          <p className="my-4 text-gray-500 text-center">
             No entries found.
           </p>
         )}
@@ -232,4 +248,4 @@ const AllTransactionList = ({ entries = [] }) => {
   );
 };
 
-export default AllTransactionList;
+export default TransactionListTable;

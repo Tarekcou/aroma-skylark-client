@@ -8,13 +8,14 @@ const Dashboard = () => {
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
-      <Sidebar />
+      {/* <Sidebar />
       <div className="flex flex-col flex-1">
         <Topbar />
         <main className="p-6">
           <Outlet />
         </main>
-      </div>
+      </div> */}
+      dashboard
     </div>
   );
 };

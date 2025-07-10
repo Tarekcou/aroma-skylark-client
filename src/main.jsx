@@ -5,7 +5,6 @@ import App from './App.jsx'
 
 import { createBrowserRouter, RouterProvider } from "react-router";
 import StartPage from './pages/StartPage.jsx';
-import Dashboard from './pages/Dashboard.jsx';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import BookDetails from './components/BookDetails.jsx';
@@ -16,9 +15,11 @@ import PrivateRoute from './routes/PrivateRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import MembersPage from './pages/MembersPage.jsx';
 import Installment from './components/Installment.jsx';
-import DashboardTab from './components/DashboardTab.jsx';
 import CategoryList from './components/CategoryList.jsx';
 import CategoryTransactions from './components/CategoryTransactions.jsx';
+import CategoryLayout from './components/CategoryLayout.jsx';
+import MainLayout from './layout/MainLayout.jsx';
+import AllTransactions from './components/AllTransactions.jsx';
 
 
 const queryClient = new QueryClient();
@@ -29,26 +30,36 @@ const router = createBrowserRouter([
     element: <StartPage />,
     errorElement: <NotFound />, // 404 for root-level
   },
- {
-  path: "/dashboard",
-  element: (
-    <PrivateRoute>
-      <Dashboard />
-    </PrivateRoute>
-  ),
-  children: [
-    { index: true, element: <DashboardTab /> },
-    { path: "categories", element: <DashboardTab />, 
-      children: [
-        { index: true, element: <></> }, // You can leave empty or render null
-        { path: ":categoryName", element: <CategoryTransactions /> },
-      ]
-    },
-    {path:"members", element: <MembersPage /> },
-    {path:"installment", element: <Installment /> }
-  ]
-}
-,
+
+  {
+    path: "/dashboard",
+    element: (
+      <PrivateRoute>
+        <MainLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      {
+        path: "transactions",
+        element: (
+          <PrivateRoute>
+            <AllTransactions />
+          </PrivateRoute>
+        ), // Wrap with PrivateRoute
+      },
+      {
+        path: "categories",
+        element: <CategoryLayout />, // New wrapper
+        children: [
+          { index: true, element: <CategoryList /> }, // /dashboard/categories
+          { path: ":categoryName", element: <CategoryTransactions /> }, // /dashboard/categories/:name
+        ],
+      },
+      { path: "members", element: <MembersPage /> },
+      { path: "installment", element: <Installment /> },
+    ],
+  },
+
   {
     path: "*",
     Component: NotFound, // ✅ catch-all for any unknown top-level route

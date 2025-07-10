@@ -4,12 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
 import MemberModal from "./MemberModal";
+import Swal from "sweetalert2";
 
 const MembersPage = () => {
   const [modalData, setModalData] = useState(null);
   const queryClient = useQueryClient();
 
-  const { data: members = [], isLoading } = useQuery({
+  const { refetch,data: members = [], isLoading } = useQuery({
     queryKey: ["members"],
     queryFn: async () => {
       const res = await axiosPublic.get("/members");
@@ -25,11 +26,30 @@ const MembersPage = () => {
     },
   });
 
-  const handleDelete = (id) => {
-    if (confirm("Are you sure to delete this member?")) {
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "This transaction will be permanently deleted!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
       deleteMutation.mutate(id);
+      // toast.success("Entry deleted");
+
+      // Trigger refetch to refresh the data
+      if (refetch) refetch();
+    } catch (err) {
+      toast.error("Failed to delete entry");
     }
   };
+  
 
   return (
     <div className="space-y-4 p-4">
@@ -48,7 +68,7 @@ const MembersPage = () => {
               <th>Name</th>
               <th>Phone</th>
               <th>Email</th>
-              <th>Role</th>
+              <th>Subscription</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -59,7 +79,7 @@ const MembersPage = () => {
                 <td>{m.name}</td>
                 <td>{m.phone}</td>
                 <td>{m.email}</td>
-                <td>{m.role}</td>
+                <td>{m.subscription}</td>
                 <td>
                   <button
                     className="btn-outline btn btn-sm"
