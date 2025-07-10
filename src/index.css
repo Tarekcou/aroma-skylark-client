@@ -2,5 +2,5 @@
 @plugin "daisyui";
 
 a.active{
-  @apply text-primary border-2 rounded-xl p-2
+  @apply text-primary underline underline-offset-4 
 }

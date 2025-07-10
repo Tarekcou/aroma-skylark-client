@@ -1,47 +1,74 @@
 import React from "react";
-import { FaBook, FaUsers, FaCog, FaQuestionCircle } from "react-icons/fa";
+import { FaBook, FaUsers, FaCog, FaQuestionCircle, FaTimes, FaPlus } from "react-icons/fa";
 import { NavLink } from "react-router";
+import { TbTransactionDollar } from "react-icons/tb";
+import { BiCategory } from "react-icons/bi";
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
   return (
-    <aside className="space-y-6 bg-white p-5 border-r w-64 min-h-screen">
-      <h2 className="font-bold text-primary text-2xl">Aroma Skylark</h2>
-      <nav className="space-y-2">
-        <div className="font-semibold text-gray-500 text-sm">Book Keeping</div>
-        <div className="flex items-center space-x-2 font-medium text-blue-600">
-          <FaBook />
-          <NavLink to={"/dashboard"}>Dashboard</NavLink>
+    <>
+      {/* Overlay for small screens */}
+      <div
+        className={`fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden transition-opacity ${
+          isOpen ? "block" : "hidden"
+        }`}
+        onClick={onClose}
+      ></div>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed z-40 top-0 left-0 h-full bg-white w-64 p-5 border-r shadow transform transition-transform duration-300 ease-in-out
+        ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:block`}
+      >
+        {/* Close Button for Mobile */}
+        <div className="flex justify-between items-center lg:hidden mb-4">
+          <h2 className="font-bold text-primary text-xl">Aroma Skylark</h2>
+          <button onClick={onClose}>
+            <FaTimes className="text-gray-600" />
+          </button>
         </div>
 
-        <div className="mt-4 font-semibold text-gray-500 text-sm">Settings</div>
-        <div className="flex items-center space-x-2">
-          <FaUsers />
-          <NavLink to={"/dashboard/transactions"}>All Transactions</NavLink>
-        </div>
-        <div className="flex items-center space-x-2">
-          <FaUsers />
-          <NavLink to={"/dashboard/categories"}>Category Wise Transactions</NavLink>
-        </div>
-        <div className="flex items-center space-x-2">
-          <FaUsers />
-          <NavLink to={"/dashboard/members"}>Members</NavLink>
-        </div>
-        <div className="flex items-center space-x-2">
-          <span className="text-green-500">➕</span>
-          <NavLink to={"/dashboard/installment"}>Installment</NavLink>
-        </div>
-        <div className="flex items-center space-x-2">
-          <FaCog />
-          <span>Business Settings</span>
-        </div>
+        <h2 className="hidden lg:block font-bold text-primary text-2xl mb-4">Aroma Skylark</h2>
 
-        <div className="mt-4 font-semibold text-gray-500 text-sm">Others</div>
-        <div className="flex items-center space-x-2">
-          <FaQuestionCircle />
-          <span>Help & Support</span>
-        </div>
-      </nav>
-    </aside>
+        <nav className="space-y-4">
+          <div className="font-semibold text-gray-500 text-sm">Book Keeping</div>
+          <NavLink to="/dashboard" end className="flex items-center space-x-2 font-medium text-blue-600">
+            <FaBook />
+            <h1 >Dashboard</h1>
+          </NavLink>
+
+          <div className="mt-4 font-semibold text-gray-500 text-sm">Settings</div>
+          <NavLink to="/dashboard/transactions" className="flex items-center space-x-2">
+            <TbTransactionDollar />
+
+            <h1 >All Transactions</h1>
+          </NavLink>
+          <NavLink to="/dashboard/categories" className="flex items-center space-x-2">
+            <BiCategory />
+
+            <h1 >Categories</h1>
+          </NavLink>
+          <NavLink to="/dashboard/members" className="flex items-center space-x-2">
+            <FaUsers />
+            <h1 >Members</h1>
+          </NavLink>
+          <NavLink to="/dashboard/installment" className="flex items-center space-x-2">
+            <span className="text-green-500"><FaPlus /></span>
+            <h1 >Installment</h1>
+          </NavLink>
+          {/* <NavLink to={"/settings"} className="flex items-center space-x-2">
+            <FaCog />
+            <span> Settings</span>
+          </NavLink> */}
+
+          {/* <div className="mt-4 font-semibold text-gray-500 text-sm">Others</div>
+          <div className="flex items-center space-x-2">
+            <FaQuestionCircle />
+            <span>Help & Support</span>
+          </div> */}
+        </nav>
+      </aside>
+    </>
   );
 };
 
