@@ -108,7 +108,7 @@ const TransactionFormModal = ({
     <div
       className={
         isModal
-          ? "fixed inset-0 z-50 bg-black/50 flex justify-center items-center"
+          ? "fixed inset-0 z-50 bg-black/50 flex justify-center items-center overflow-auto p-4 pt-10"
           : "p-4 max-w-md mx-auto"
       }
     >
@@ -153,10 +153,15 @@ const TransactionFormModal = ({
           />
 
           <div>
-            <select {...register("category")} className="w-full select-bordered select">
+            <select
+              {...register("category")}
+              className="w-full select-bordered select"
+            >
               <option value="">Select Category</option>
               {allCategories.map((c) => (
-                <option key={c} value={c}>{c}</option>
+                <option key={c} value={c}>
+                  {c}
+                </option>
               ))}
             </select>
             <div className="flex gap-2 mt-2">
@@ -165,7 +170,7 @@ const TransactionFormModal = ({
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
                 placeholder="New category"
-                className="input-bordered input input-sm w-full"
+                className="input-bordered w-full input input-sm"
               />
               <button
                 type="button"
@@ -195,7 +200,9 @@ const TransactionFormModal = ({
             >
               <option value="">Select Extra Field</option>
               {allFields.map((f) => (
-                <option key={f} value={f}>{f}</option>
+                <option key={f} value={f}>
+                  {f}
+                </option>
               ))}
             </select>
             <div className="flex gap-2 mt-2">

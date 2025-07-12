@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { FaPlus, FaMinus, FaEquals } from "react-icons/fa";
 import TransactionFormModal from "./TransactionFormModal";
 import CategoryList from "./CategoryList";
@@ -7,9 +7,11 @@ import axiosPublic from "../axios/AxiosPublic";
 import { Link, Outlet, useLocation, useParams } from "react-router";
 import SummaryCard from "./SummaryCard";
 import TransactionListTable from "./TransactionListTable";
+import { useAuth } from "../context/AuthContext";
 
 const AllTransactions = () => {
   const [modalOpen, setModalOpen] = useState(false);
+  const { login, isAuthenticated } = useAuth();
   // const [activeTab, setActiveTab] = useState("transactions"); // 👈 Use state, not URL
 const location = useLocation();
 const isCategoriesTab = location.pathname.startsWith("/dashboard/categories");
@@ -46,22 +48,22 @@ const totalInstallmentCashIn = members.reduce(
   const netBalance =  totalInstallmentCashIn-cashOut;
 
   return (
-    <div className="space-y-4 p-4 min-h-screen">
-      {/* Summary Cards */}
+    <div className={`space-y-4 mx-auto p-4 py-10 ${isAuthenticated&& "w-full"} w-10/12 min-h-screen`}>
+      {/* Summary} Cards */}
       <SummaryCard />
-
-     
 
      
           {/* Show Transaction List & Button */}
           <div className="flex justify-between items-center mb-2">
             <h2 className="font-semibold text-xl">💼 All Transactions</h2>
+            {isAuthenticated&&
             <button
               className="btn btn-primary btn-sm"
               onClick={() => setModalOpen(true)}
             >
               ➕ Add Transaction
             </button>
+}
           </div>
 
           {isLoading && <p>Loading...</p>}

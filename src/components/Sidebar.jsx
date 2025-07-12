@@ -21,14 +21,14 @@ const Sidebar = ({ isOpen, onClose }) => {
         ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:block`}
       >
         {/* Close Button for Mobile */}
-        <div className="flex justify-between items-center lg:hidden mb-4">
+        <div className="lg:hidden flex justify-between items-center mb-4">
           <h2 className="font-bold text-primary text-xl">Aroma Skylark</h2>
           <button onClick={onClose}>
             <FaTimes className="text-gray-600" />
           </button>
         </div>
 
-        <h2 className="hidden lg:block font-bold text-primary text-2xl mb-4">Aroma Skylark</h2>
+        <h2 className="hidden lg:block mb-4 font-bold text-primary text-2xl">Aroma Skylark</h2>
 
         <nav className="space-y-4">
           <div className="font-semibold text-gray-500 text-sm">Book Keeping</div>
@@ -47,6 +47,11 @@ const Sidebar = ({ isOpen, onClose }) => {
             <BiCategory />
 
             <h1 >Categories</h1>
+          </NavLink>
+          <NavLink to="/dashboard/products" className="flex items-center space-x-2">
+            <BiCategory />
+
+            <h1 >Products</h1>
           </NavLink>
           <NavLink to="/dashboard/members" className="flex items-center space-x-2">
             <FaUsers />

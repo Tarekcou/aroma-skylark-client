@@ -6,6 +6,7 @@ import TransactionFormModal from "./TransactionFormModal";
 import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import { useAuth } from "../context/AuthContext";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -15,6 +16,7 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
   const [selectedDate, setSelectedDate] = useState("");
   const [page, setPage] = useState(1);
   const [editEntry, setEditEntry] = useState(null);
+  const { login, isAuthenticated } = useAuth();
 
   const categories = useMemo(
     () => ["All", ...new Set(entries.map((e) => e.category).filter(Boolean))],
@@ -80,14 +82,16 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
     doc.text("Transaction List", 14, 16);
     autoTable(doc, {
       startY: 20,
-      head: [["#", "Date", "Remarks", "Category", "Mode", "Bill", "Amount"]],
+      head: [["#", "Date", "Remarks", "Category", "Mode", 
+        // "Bill", 
+        "Amount"]],
       body: filteredEntries.map((e, i) => [
         i + 1,
         new Date(e.date).toLocaleString(),
         e.remarks || "-",
         e.category || "-",
         e.mode || "-",
-        e.billNo || "-",
+        // e.billNo || "-",
         `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
       ]),
     });
@@ -96,7 +100,6 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
 
   return (
     <div className="space-y-6">
-      
       {/* Filters */}
       <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col text-sm">
@@ -161,9 +164,9 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
               <th>Remarks</th>
               <th>Category</th>
               <th>Mode</th>
-              <th>Bill</th>
+              {/* <th>Bill</th> */}
               <th>Amount</th>
-              <th>Actions</th>
+              { isAuthenticated && <th>Actions</th> }
             </tr>
           </thead>
           <tbody>
@@ -174,7 +177,7 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
                 <td>{e.remarks}</td>
                 <td>{e.category}</td>
                 <td>{e.mode}</td>
-                <td>{e.billNo || "-"}</td>
+                {/* <td>{e.billNo || "-"}</td> */}
                 <td
                   className={
                     e.type === "cash-in" ? "text-green-600" : "text-red-600"
@@ -182,31 +185,31 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
                 >
                   {e.type === "cash-in" ? "+" : "-"} {e.amount}
                 </td>
-                <td>
-                  <div className="flex gap-2">
-                    <button
-                      className="btn-outline btn-xs btn"
-                      onClick={() => setEditEntry(e)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="btn-error btn-xs btn"
-                      onClick={() => handleDelete(e._id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </td>
+                {isAuthenticated && (
+                  <td>
+                    <div className="flex gap-2">
+                      <button
+                        className="btn-outline btn-xs btn"
+                        onClick={() => setEditEntry(e)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="btn-error btn-xs btn"
+                        onClick={() => handleDelete(e._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
 
         {filteredEntries.length === 0 && (
-          <p className="my-4 text-gray-500 text-center">
-            No entries found.
-          </p>
+          <p className="my-4 text-gray-500 text-center">No entries found.</p>
         )}
       </div>
 

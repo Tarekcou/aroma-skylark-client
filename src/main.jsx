@@ -2,9 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import { createBrowserRouter, RouterProvider } from "react-router";
-import StartPage from './pages/StartPage.jsx';
+import StartPage from './pages/LoginPage.jsx';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import BookDetails from './components/BookDetails.jsx';
@@ -20,6 +21,11 @@ import CategoryTransactions from './components/CategoryTransactions.jsx';
 import CategoryLayout from './components/CategoryLayout.jsx';
 import MainLayout from './layout/MainLayout.jsx';
 import AllTransactions from './components/AllTransactions.jsx';
+import ProductList from './pages/product/ProductList.jsx';
+import Dashboard from './pages/Dashboard.jsx';
+import HomePage from './pages/HomePage.jsx';
+import LoginPage from './pages/LoginPage.jsx';
+import TransactionListTable from './components/TransactionListTable.jsx';
 
 
 const queryClient = new QueryClient();
@@ -27,8 +33,12 @@ const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <StartPage />,
+    element: <HomePage />,
     errorElement: <NotFound />, // 404 for root-level
+    children:[
+      {index: true, element: <AllTransactions />}, // / (root)
+      {path:"login", element: <LoginPage />}
+    ]
   },
 
   {
@@ -39,6 +49,7 @@ const router = createBrowserRouter([
       </PrivateRoute>
     ),
     children: [
+      {index: true, element: <Dashboard />}, // /dashboard
       {
         path: "transactions",
         element: (
@@ -57,6 +68,10 @@ const router = createBrowserRouter([
       },
       { path: "members", element: <MembersPage /> },
       { path: "installment", element: <Installment /> },
+      {
+        path: "products",
+        element: <ProductList />,
+      },
     ],
   },
 
