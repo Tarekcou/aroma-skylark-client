@@ -1,7 +1,7 @@
 import React from "react";
 import { Player } from "@lottiefiles/react-lottie-player";
 // import emailLottie from "../assets/emaillotties.json";
-import emailLottie from "../assets/emailLotties.json"
+import emailLottie from "../assets/loginLottie.json"
 
 const ContactPage = () => {
   return (
