@@ -1,8 +1,7 @@
 import React from "react";
 import { Player } from "@lottiefiles/react-lottie-player";
 // import emailLottie from "../assets/emaillotties.json";
-import emailLottie from "../assets/emailLotties.json"
-
+import emailLottie from "../assets/emailLottie.json"
 const ContactPage = () => {
   return (
     <div className="flex flex-col items-center my-10 px-4 py-12 pt-20 min-h-screen">

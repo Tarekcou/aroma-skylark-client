@@ -54,8 +54,8 @@ const totalInstallmentCashIn = members.reduce(
 
      
           {/* Show Transaction List & Button */}
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="font-semibold text-xl">💼 All Transactions</h2>
+          <div className="flex justify-between items-center my-10 mb-2">
+            <h2 className="my-5 font-semibold text-xl md:text-3xl">💼 All Transactions</h2>
             {isAuthenticated&&
             <button
               className="btn btn-primary btn-sm"
