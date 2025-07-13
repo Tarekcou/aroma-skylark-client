@@ -52,7 +52,7 @@ const totalInstallmentCashIn = members.reduce(
   return (
     <div
       className={`space-y-4 relative mx-auto  py-5 ${
-        isAuthenticated && "w-full p-4"
+        isAuthenticated && " p-4"
       } w-11/12 min-h-screen `}
     >
       {/* Summary} Cards */}
