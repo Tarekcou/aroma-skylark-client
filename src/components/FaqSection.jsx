@@ -31,7 +31,7 @@ const FaqSection = () => {
 
   return (
     <div className="space-y-4 mx-auto mt-10 w-10/12">
-      <h2 className="my-4 font-bold text-3xl text-center">
+      <h2 className="my-4 font-bold text-xl md:text-3xl text-center">
         Frequently Asked Questions
       </h2>
       <div className="flex md:flex-row flex-col">
@@ -40,7 +40,7 @@ const FaqSection = () => {
             autoplay
             loop
             src={questionLottie}
-            style={{ height: "300px", width: "100%" }}
+            className="w-36 md:w-64"
           />
         </div>
         <div className="w-full md:w-1/2">

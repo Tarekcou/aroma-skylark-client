@@ -34,19 +34,19 @@ const SummaryCard = () => {
     const netBalance = totalInstallmentCashIn - cashOut;
   return (
     <div className="gap-4 grid grid-cols-1 md:grid-cols-3">
-      <div className="bg-green-100 shadow p-4 card">
+      <div className="bg-green-100 shadow p-2 md:p-4 card">
         <p className="text-gray-500 text-sm">Total Balance</p>
         <h2 className="font-bold text-green-700 text-2xl">
           <FaPlus /> {totalInstallmentCashIn}
         </h2>
       </div>
-      <div className="bg-red-100 shadow p-4 card">
+      <div className="bg-red-100 shadow p-2 md:p-4 card">
         <p className="text-gray-500 text-sm">Total Expences</p>
         <h2 className="font-bold text-red-700 text-2xl">
           <FaMinus /> {cashOut}
         </h2>
       </div>
-      <div className="bg-blue-100 shadow p-4 card">
+      <div className="bg-blue-100 shadow p-2 md:p-4 card">
         <p className="text-gray-500 text-sm">Net Balance</p>
         <h2 className="font-bold text-blue-700 text-2xl">
           <FaEquals /> {netBalance}

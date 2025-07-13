@@ -7,7 +7,7 @@ const ContactPage = () => {
     <div className="flex flex-col items-center my-10 px-4 py-12 pt-20 min-h-screen">
       {/* Heading Section */}
       <div className="mb-10 text-center">
-        <h1 className="font-bold text-gray-800 text-4xl md:text-5xl">
+        <h1 className="font-bold text-gray-800 text-2xl md:text-5xl">
           Connect, Collaborate, Calculate
         </h1>
         <p className="mx-auto mt-2 w-10/12 md:w-8/12 text-gray-600 text-lg">
@@ -27,7 +27,7 @@ const ContactPage = () => {
             autoplay
             loop
             src={emailLottie}
-            style={{ height: "250px", width: "100%" }}
+            className="w-36 md:w-64"
           />
         </div>
 

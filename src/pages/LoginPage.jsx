@@ -30,22 +30,22 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="bg-base-100 mx-auto mt-10 w-full md:w-10/12 min-h-screen">
+    <div className="bg-base-100 mx-auto mt-10 w-11/12 md:w-10/12 min-h-screen">
       <h1 className="text-5xl text-center">Please Login</h1>
       <div className="flex md:flex-row flex-col justify-center items-center">
         {/* Left Section */}
-        <div className="flex flex-col justify-center items-center space-y-4 px-6 md:w-1/3 min-h-screen text-center">
+        <div className="flex justify-center items-center px-6 md:w-1/2 h-[300px] md:h-screen">
           <Player
             autoplay
             loop
             src={loginLotties}
-            style={{ height: "300px", width: "100%" }}
+            className="w-full max-w-sm h-full object-contain"
           />
         </div>
 
         {/* Right: Login Card */}
         <div className="bg-base-100 w-full md:w-2/3 h-full card shrink-0">
-          <div className="shadow-xl mx-auto w-8/12 card-body">
+          <div className="shadow-xl mx-auto w-full md:w-8/12 card-body">
             <form onSubmit={handleLogin}>
               <fieldset className="space-y-4 p-10 fieldset">
                 <label className="label">ID</label>

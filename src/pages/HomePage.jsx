@@ -58,7 +58,7 @@ const HomePage = () => {
       </div>
       <FaqSection />
       <div className="space-y-2 mx-auto my-6 mt-10 w-11/12 md:w-10/12">
-      <h1 className='font-bold text-3xl text-center'>Expenses Graphical Representation</h1>
+      <h1 className='font-bold text-2xl md:text-3xl text-center'>Expenses Graphical Representation</h1>
         <DailyExpenseChart data={dailyExpenses} />
         <MonthlyCategoryPieChart data={monthlyCategoryExpenses} />
       </div>
