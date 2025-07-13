@@ -48,14 +48,14 @@ const totalInstallmentCashIn = members.reduce(
   const netBalance =  totalInstallmentCashIn-cashOut;
 
   return (
-    <div className={`space-y-4 mx-auto p-4 py-10 ${isAuthenticated&& "w-full"} w-10/12 min-h-screen`}>
+    <div className={`space-y-4 mx-auto  py-10 ${isAuthenticated&& "w-full p-4"} w-11/12 min-h-screen `}>
       {/* Summary} Cards */}
       <SummaryCard />
 
      
           {/* Show Transaction List & Button */}
           <div className="flex justify-between items-center my-10 mb-2">
-            <h2 className="my-5 font-semibold text-xl md:text-3xl">💼 All Transactions</h2>
+            <h2 className="my-5 font-semibold text-3xl">💼 All Transactions</h2>
             {isAuthenticated&&
             <button
               className="btn btn-primary btn-sm"

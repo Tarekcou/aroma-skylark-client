@@ -69,10 +69,10 @@ const Hero = () => {
           <p className="opacity-90 text-xs md:text-xl transition duration-500">
             {subheading}
           </p>
-          <div className="z-60 w-24">
+          <div className="z-30 w-24">
             <Link
               to={"/login"}
-              className="md:bottom-1/4 left-1/4 md:left-1/10 z-50 absolute bg-purple-600 hover:bg-purple-700 shadow-lg px-6 py-3 border-none rounded-lg text-white text-xs md:text-base transition duration-300 btn btn-sm md:btn-md"
+              className="md:bottom-1/4 left-1/4 md:left-1/10 z-30 absolute bg-purple-600 hover:bg-purple-700 shadow-lg px-6 py-3 border-none rounded-lg text-white text-xs md:text-base transition duration-300 btn btn-sm md:btn-md"
             >
               Let’s Simplify Construction
             </Link>
