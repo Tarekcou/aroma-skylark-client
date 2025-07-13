@@ -50,7 +50,7 @@ const CategoryList = () => {
 
       {/* Category List */}
       <div className="space-y-3">
-        <h1 className="text-2xl font-bold">Different Category List</h1>
+        <h1 className="font-bold text-2xl">Different Category List</h1>
         {categories.map((cat, idx) => (
           <div
             key={idx}
@@ -60,6 +60,12 @@ const CategoryList = () => {
             <h3 className="font-bold text-blue-600 hover:underline">{cat}</h3>
           </div>
         ))}
+        {categories.length == 0 && (
+          <p className="mt-10 text-gray-500 text-center">
+            No Category transactions found.
+          </p>
+        )}
+       
       </div>
     </div>
   );

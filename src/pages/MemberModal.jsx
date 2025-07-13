@@ -46,7 +46,7 @@ const onSubmit = (formData) => {
     <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/40 bg-opacity-30">
       <div className="bg-white shadow-lg p-6 rounded w-full max-w-md">
         <h3 className="mb-4 font-bold text-lg">
-          {data ? "Edit Member" : "Add New Member"}
+          {data ? " Member Form" : " Member Form"}
         </h3>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <input
@@ -68,7 +68,7 @@ const onSubmit = (formData) => {
           <input
             {...register("subscription")}
             placeholder="Subscription Amount"
-            defaultValue={250000}
+            defaultValue={350000}
             className="input-bordered w-full input"
           />
           <div className="flex justify-between">

@@ -4,6 +4,7 @@ import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
 import InstallmentEditModal from "./InstallmentEditModal";
 import { useEffect } from "react";
+import { MdAdd } from "react-icons/md";
 
 const Installment = () => {
 const [editMember, setEditMember] = useState(null);
@@ -59,12 +60,15 @@ useEffect(() => {
   };
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="relative space-y-4 p-4">
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-xl">
           💰 Construction Installment Collection
         </h2>
-        <button onClick={handleAddInstallment} className="btn btn-sm btn-info">
+        <button
+          onClick={handleAddInstallment}
+          className="hidden md:block btn btn-sm btn-info"
+        >
           + Add Installment Column
         </button>
       </div>
@@ -120,6 +124,15 @@ useEffect(() => {
             })}
           </tbody>
         </table>
+
+        
+        <button
+          onClick={handleAddInstallment}
+          className="md:hidden bottom-6 left-1/2 z-50 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
+        >
+          <MdAdd /> Add Installment Column
+        </button>
+
         {editMember && (
           <InstallmentEditModal
             member={editMember}

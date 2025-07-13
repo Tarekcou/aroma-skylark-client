@@ -5,7 +5,7 @@ import axiosPublic from "../../axios/AxiosPublic";
 import AddProductModal from "./AddProductModal";
 import { BiPencil } from "react-icons/bi";
 import { FaRemoveFormat } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
+import { MdAdd, MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
 import { useQueryClient } from "@tanstack/react-query";
 import ProductUpdateModal from "./ProductUpdateModal";
@@ -76,13 +76,13 @@ const handleDelete = async (productId) => {
   if (loadingProducts ) return <p>Loading...</p>;
 
   return (
-    <div className="bg-white shadow p-4 rounded-lg">
+    <div className="relative bg-white shadow p-4 rounded-lg h-full">
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold text-xl">📦 Product Stock List</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setAddModalOpen(true)}
-            className="btn btn-primary btn-sm"
+            className="hidden md:block btn btn-primary btn-sm"
           >
             ➕ Add Product
           </button>
@@ -123,9 +123,7 @@ const handleDelete = async (productId) => {
             )}
 
             {products?.map((product, i) => {
-              const { totalIn, totalOut, current } = calculateStock(
-                product
-              );
+              const { totalIn, totalOut, current } = calculateStock(product);
               return (
                 <tr key={product._id}>
                   <td>{i + 1}</td>
@@ -150,11 +148,13 @@ const handleDelete = async (productId) => {
                         }}
                         className="text-base btn btn-primary btn-xs"
                       >
-                        <BiPencil /> 
+                        <BiPencil />
                       </button>
-                      <div onClick={()=>handleDelete(product._id)} className="flex items-center text-red-500 text-base btn btn-primary btn-xs">
-                        <MdDelete />                
-                        
+                      <div
+                        onClick={() => handleDelete(product._id)}
+                        className="flex items-center text-red-500 text-base btn btn-primary btn-xs"
+                      >
+                        <MdDelete />
                       </div>
                     </div>
                   </td>
@@ -168,6 +168,12 @@ const handleDelete = async (productId) => {
           <p className="py-4 text-gray-500 text-center">No products found.</p>
         )}
       </div>
+      <button
+        onClick={() => setAddModalOpen(true)}
+        className="md:hidden bottom-6 left-1/2 z-50 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
+      >
+        <MdAdd /> Add Product
+      </button> 
 
       {/* ✅ Only one modal, reused */}
       {entryModalOpen && (

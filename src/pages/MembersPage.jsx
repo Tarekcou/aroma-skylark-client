@@ -5,6 +5,7 @@ import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
 import MemberModal from "./MemberModal";
 import Swal from "sweetalert2";
+import { MdAdd } from "react-icons/md";
 
 const MembersPage = () => {
   const [modalData, setModalData] = useState(null);
@@ -55,7 +56,10 @@ const MembersPage = () => {
     <div className="space-y-4 p-4">
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-xl">👥 Members</h2>
-        <button onClick={() => setModalData({})} className="btn btn-primary">
+        <button
+          onClick={() => setModalData({})}
+          className="hidden md:block btn btn-primary"
+        >
           + Add Member
         </button>
       </div>
@@ -99,6 +103,13 @@ const MembersPage = () => {
           </tbody>
         </table>
       </div>
+      
+      <button
+        onClick={() => setModalData({})}
+        className="md:hidden bottom-6 left-1/2 z-50 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
+      >
+        <MdAdd /> Add Member
+      </button>
 
       {modalData && (
         <MemberModal data={modalData} closeModal={() => setModalData(null)} />

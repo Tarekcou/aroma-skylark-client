@@ -31,13 +31,13 @@ const Sidebar = ({ isOpen, onClose }) => {
         <h2 className="hidden lg:block mb-4 font-bold text-primary text-2xl">Aroma Skylark</h2>
 
         <nav className="space-y-4">
-          <div className="font-semibold text-gray-500 text-sm">Book Keeping</div>
+          {/* <div className="font-semibold text-gray-500 text-sm">Book Keeping</div> */}
           <NavLink to="/dashboard" end className="flex items-center space-x-2 font-medium text-blue-600">
             <FaBook />
             <h1 >Dashboard</h1>
           </NavLink>
 
-          <div className="mt-4 font-semibold text-gray-500 text-sm">Settings</div>
+          <div className="mt-4 font-semibold text-gray-500 text-sm">Transaction</div>
           <NavLink to="/dashboard/transactions" className="flex items-center space-x-2">
             <TbTransactionDollar />
 
