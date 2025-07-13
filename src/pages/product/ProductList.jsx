@@ -82,9 +82,9 @@ const handleDelete = async (productId) => {
         <div className="flex gap-2">
           <button
             onClick={() => setAddModalOpen(true)}
-            className="hidden md:block btn btn-primary btn-sm"
+            className="hidden md:flex btn btn-primary btn-sm"
           >
-            ➕ Add Product
+            <MdAdd className="" /> Add Product
           </button>
           <AddProductModal
             isOpen={addModalOpen}
@@ -167,13 +167,13 @@ const handleDelete = async (productId) => {
         {products.length === 0 && (
           <p className="py-4 text-gray-500 text-center">No products found.</p>
         )}
+        <button
+          onClick={() => setAddModalOpen(true)}
+          className="md:hidden bottom-6 left-1/2 z-30 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
+        >
+          <MdAdd /> Add Product
+        </button>
       </div>
-      <button
-        onClick={() => setAddModalOpen(true)}
-        className="md:hidden bottom-6 left-1/2 z-50 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
-      >
-        <MdAdd /> Add Product
-      </button> 
 
       {/* ✅ Only one modal, reused */}
       {entryModalOpen && (

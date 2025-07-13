@@ -128,7 +128,7 @@ useEffect(() => {
         
         <button
           onClick={handleAddInstallment}
-          className="md:hidden bottom-6 left-1/2 z-50 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
+          className="md:hidden bottom-6 left-1/2 z-30 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
         >
           <MdAdd /> Add Installment Column
         </button>

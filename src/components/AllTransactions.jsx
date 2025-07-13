@@ -65,10 +65,10 @@ const totalInstallmentCashIn = members.reduce(
         </h2>
         {isAuthenticated && (
           <button
-            className="hidden md:block btn btn-primary btn-sm"
+            className="hidden md:flex btn btn-primary btn-sm"
             onClick={() => setModalOpen(true)}
           >
-            <MdAdd className="text-xl" /> Add Transaction
+            <MdAdd className="" /> Add Transaction
           </button>
         )}
       </div>
