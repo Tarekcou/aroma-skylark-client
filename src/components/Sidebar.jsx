@@ -22,17 +22,17 @@ const Sidebar = ({ isOpen, onClose }) => {
       >
         {/* Close Button for Mobile */}
         <div className="lg:hidden flex justify-between items-center mb-4">
-          <h2 className="font-bold text-primary text-xl">Aroma Skylark</h2>
+          {/* <h2 className="font-bold text-primary text-xl">Aroma Skylark</h2> */}
           <button onClick={onClose}>
             <FaTimes className="text-gray-600" />
           </button>
         </div>
 
-        <h2 className="hidden lg:block mb-4 font-bold text-primary text-2xl">Aroma Skylark</h2>
+        {/* <h2 className="hidden lg:block mb-4 font-bold text-primary text-2xl">Aroma Skylark</h2> */}
 
         <nav className="space-y-4">
           {/* <div className="font-semibold text-gray-500 text-sm">Book Keeping</div> */}
-          <NavLink to="/dashboard" end className="flex items-center space-x-2 font-medium text-blue-600">
+          <NavLink to="/dashboard" end className="flex items-center space-x-2 font-medium">
             <FaBook />
             <h1 >Dashboard</h1>
           </NavLink>

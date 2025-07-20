@@ -5,24 +5,26 @@ import logo from "../assets/logo.jpg";
 const Footer = () => {
   return (
     <div className="bg-amber-50">
-      <footer className="flex flex-wrap justify-between mx-auto p-10 w-11/12 text-base-content footer">
-        <div className="flex flex-col items-start space-y-2">
+      <footer className="flex flex-wrap justify-between mx-auto p-5 w-11/12 text-base-content footer">
+        <div className="flex items-center gap-4 space-y-2">
           <img className="rounded w-10 h-10" src={logo} alt="Symence Logo" />
-          <h1 className="font-bold text-gray-700 text-2xl">Aroma Skylark</h1>
-          <p className="max-w-xs text-gray-600">
-            Building digital tools for smarter construction management. Track
-            expenses, stock, members, and more with ease.
-          </p>
+          <div>
+            <h1 className="font-bold text-gray-700 text-2xl">Aroma Skylark</h1>
+            <p className="max-w-xs text-gray-600">
+              Building digital tools for smarter construction management. Track
+              expenses, stock, members, and more with ease.
+            </p>
+          </div>
         </div>
 
-        <nav className="flex flex-col space-y-2">
+        {/* <nav className="flex flex-col space-y-2">
           <h6 className="text-gray-700 footer-title">Features</h6>
           <span className="link link-hover">Expense Tracking</span>
           <span className="link link-hover">Stock Management</span>
           <span className="link link-hover">Installment Monitoring</span>
           <span className="link link-hover">Construction Budgeting</span>
           <span className="link link-hover">Financial Reports</span>
-        </nav>
+        </nav> */}
 
         <nav className="flex flex-col space-y-2">
           <h6 className="text-gray-700 footer-title">Company</h6>
@@ -32,7 +34,6 @@ const Footer = () => {
           <Link to="/login" className="link link-hover">
             Login
           </Link>
-         
         </nav>
 
         <nav className="flex flex-col space-y-2">
