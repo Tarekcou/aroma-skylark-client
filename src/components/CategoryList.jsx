@@ -61,7 +61,7 @@ const CategoryList = () => {
           </div>
         ))}
         {categories.length == 0 && (
-          <p className="mt-10 text-gray-500 text-center">
+          <p className="flex justify-center items-center min-h-[50vh] text-gray-500 text-center">
             No Category transactions found.
           </p>
         )}

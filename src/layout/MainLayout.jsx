@@ -17,7 +17,7 @@ const MainLayout = () => {
 
         {/* Main content area */}
         <div className="flex flex-col flex-1 overflow-hidden">
-          {/* <Topbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} /> */}
+          <Topbar onToggleSidebar={() => setSidebarOpen((prev) => !prev)} />
 
           <main className="flex-1 p-4 sm:p-6 overflow-y-auto">
             <Outlet />

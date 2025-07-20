@@ -17,11 +17,11 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed z-40 top-0 left-0 h-full min-h-full  bg-white w-64 p-5  shadow transform transition-transform duration-300 ease-in-out
+        className={`fixed z-40 top-0 left-0 h-full min-h-full  bg-white w-64 p-5  shadow transform transition-transform duration-300 ease-in-out pt-20 lg:pt-10
         ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:block`}
       >
         {/* Close Button for Mobile */}
-        <div className="lg:hidden flex justify-between items-center mb-4">
+        <div className="lg:hidden flex justify-end items-center mb-4">
           {/* <h2 className="font-bold text-primary text-xl">Aroma Skylark</h2> */}
           <button onClick={onClose}>
             <FaTimes className="text-gray-600" />

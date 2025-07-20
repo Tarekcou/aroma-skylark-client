@@ -51,16 +51,16 @@ const totalInstallmentCashIn = members.reduce(
 
   return (
     <div
-      className={`space-y-4 relative mx-auto  py-5 ${
-        isAuthenticated && " p-4"
-      } w-full md:w-11/12 min-h-screen `}
+      className={`space-y-4 relative mx-auto    ${
+        isAuthenticated && " "
+      } w-full  min-h-screen `}
     >
       {/* Summary} Cards */}
       <SummaryCard />
 
       {/* Show Transaction List & Button */}
       <div className="flex justify-between items-center my-10 mb-2">
-        <h2 className="my-5 font-semibold text-2xl md:text-3xl text-center">
+        <h2 className="my-5 font-semibold text-xl md:text-2xl text-center">
           💼 All Transactions
         </h2>
         {isAuthenticated && (
@@ -76,7 +76,7 @@ const totalInstallmentCashIn = members.reduce(
       {isLoading && <p>Loading...</p>}
       {isError && <p className="text-red-500">Failed to load data.</p>}
       {!isLoading && entries.length === 0 && (
-        <p className="mt-10 text-gray-500 text-center">
+        <p className="flex justify-center items-center min-h-[50vh] text-gray-500 text-center">
           No transactions found.
         </p>
       )}

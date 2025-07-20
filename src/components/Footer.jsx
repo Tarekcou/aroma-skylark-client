@@ -5,7 +5,7 @@ import logo from "../assets/logo.jpg";
 const Footer = () => {
   return (
     <div className="bg-amber-50">
-      <footer className="flex flex-wrap justify-around mx-auto p-5 w-11/12 text-base-content footer">
+      <footer className="flex justify-around gap-5 mx-auto p-5 w-full md:w-11/12 text-base-content footer">
         <div className="flex items-center gap-4 space-y-2">
           <img className="rounded w-10 h-10" src={logo} alt="Symence Logo" />
           <div>

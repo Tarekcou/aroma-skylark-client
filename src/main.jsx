@@ -23,9 +23,9 @@ import MainLayout from './layout/MainLayout.jsx';
 import AllTransactions from './components/AllTransactions.jsx';
 import ProductList from './pages/product/ProductList.jsx';
 import Dashboard from './pages/Dashboard.jsx';
-import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import TransactionListTable from './components/TransactionListTable.jsx';
+import HomeLayout from './layout/HomeLayout.jsx';
 
 
 const queryClient = new QueryClient();
@@ -33,7 +33,7 @@ const queryClient = new QueryClient();
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <HomePage />,
+    element: <HomeLayout />,
     errorElement: <NotFound />, // 404 for root-level
     children:[
       {index: true, element: <AllTransactions />}, // / (root)

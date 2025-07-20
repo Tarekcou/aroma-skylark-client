@@ -20,29 +20,29 @@ const Topbar = ({ onToggleSidebar }) => {
   };
 
   return (
-    <div className="flex justify-between items-center bg-white shadow-sm p-4 border-b">
+    <div className="flex justify-between items-center bg-white shadow-sm px-4">
       <div className="flex items-center space-x-3">
         {/* Hamburger menu for mobile */}
-        <button className="lg:hidden btn btn-sm btn-outline" onClick={onToggleSidebar}>
+        <button className="lg:hidden btn-outline btn btn-sm" onClick={onToggleSidebar}>
           <FaBars />
         </button>
-        <button
+        {/* <button
           onClick={handleBack}
           className="hidden sm:inline btn-outline text-sm btn btn-sm"
         >
           {!bookName ? "Summary" : "← Back to Dashboard"}
-        </button>
+        </button> */}
       </div>
 
-      <div className="font-semibold text-lg text-center flex-1">
+      {/* <div className="flex-1 font-semibold text-lg text-center">
         {bookName || "Dashboard"}
-      </div>
+      </div> */}
 
-      <div className="flex items-center space-x-4">
+      {/* <div className="flex items-center space-x-4">
         <button onClick={handleLogout} className="btn-outline text-red-500 btn btn-sm">
           Logout
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };

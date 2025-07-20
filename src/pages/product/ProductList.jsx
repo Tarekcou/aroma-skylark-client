@@ -165,11 +165,13 @@ const handleDelete = async (productId) => {
         </table>
 
         {products.length === 0 && (
-          <p className="py-4 text-gray-500 text-center">No products found.</p>
+          <p className="flex justify-center items-center min-h-[50vh] text-gray-500 text-center">
+            No products found.
+          </p>
         )}
         <button
           onClick={() => setAddModalOpen(true)}
-          className="md:hidden bottom-6 left-1/2 z-30 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
+          className="md:hidden bottom-6 left-1/2 z-30 absolute -translate-x-1/2 transform btn btn-primary btn-sm"
         >
           <MdAdd /> Add Product
         </button>

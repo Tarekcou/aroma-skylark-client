@@ -60,14 +60,14 @@ useEffect(() => {
   };
 
   return (
-    <div className="relative space-y-4 p-4">
-      <div className="flex justify-between items-center">
+    <div className="relative space-y-4">
+      <div className="flex md:flex-row flex-col justify-between items-center gap-5">
         <h2 className="font-bold text-xl">
           💰 Construction Installment Collection
         </h2>
         <button
           onClick={handleAddInstallment}
-          className="hidden md:block btn btn-sm btn-info"
+          className="btn btn-sm btn-info"
         >
           + Add Installment Column
         </button>
@@ -125,14 +125,6 @@ useEffect(() => {
           </tbody>
         </table>
 
-        
-        <button
-          onClick={handleAddInstallment}
-          className="md:hidden bottom-6 left-1/2 z-30 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
-        >
-          <MdAdd /> Add Installment Column
-        </button>
-
         {editMember && (
           <InstallmentEditModal
             member={editMember}
@@ -142,11 +134,12 @@ useEffect(() => {
         )}
 
         {!isLoading && members.length === 0 && (
-          <p className="mt-4 text-gray-500 text-center">
-            No members found in database.
+          <p className="flex justify-center items-center min-h-[50vh] text-gray-500 text-center">
+            Please add members before adding installment
           </p>
         )}
       </div>
+      
     </div>
   );
 };

@@ -3,14 +3,14 @@ import Hero from '../components/Hero'
 import { Outlet } from 'react-router'
 import Footer from '../components/Footer'
 import Navbar from '../components/Navbar'
-import ContactPage from './ContactPage'
+import ContactPage from '../pages/ContactPage'
 import FaqSection from '../components/FaqSection'
 import DailyExpenseChart from '../components/charts/DailyExpenseChart'
 import MonthlyCategoryPieChart from '../components/charts/MonthlyCategoryPieChart'
 import axiosPublic from '../axios/AxiosPublic'
 import { useQuery } from '@tanstack/react-query'
 
-const HomePage = () => {
+const HomeLayout = () => {
   const {
     data: entries = [],
     isLoading: loadingEntries,
@@ -53,7 +53,7 @@ const HomePage = () => {
     <div>
       <Navbar />
       {/* <Hero /> */}
-      <div className="my-16 min-h-screen">
+      <div className="mx-auto mt-24 mb-10 w-11/12 min-h-screen">
         <Outlet />
       </div>
       {/* <FaqSection />
@@ -70,4 +70,4 @@ const HomePage = () => {
   );
 }
 
-export default HomePage
+export default HomeLayout

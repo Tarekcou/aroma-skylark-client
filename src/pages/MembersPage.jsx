@@ -53,7 +53,7 @@ const MembersPage = () => {
   
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-xl">👥 Members</h2>
         <button
@@ -103,13 +103,18 @@ const MembersPage = () => {
           </tbody>
         </table>
       </div>
-      
+
       <button
         onClick={() => setModalData({})}
-        className="md:hidden bottom-6 left-1/2 z-30 fixed -translate-x-1/2 transform btn btn-primary btn-sm"
+        className="md:hidden bottom-0 left-1/2 z-30 absolute -translate-x-1/2 transform btn btn-primary btn-sm"
       >
         <MdAdd /> Add Member
       </button>
+      {members.length == 0 && (
+        <p className="flex justify-center items-center min-h-[50vh] text-gray-500 text-center">
+          No Members found.
+        </p>
+      )}
 
       {modalData && (
         <MemberModal data={modalData} closeModal={() => setModalData(null)} />

@@ -19,7 +19,7 @@ const handleLogout = () => {
   }, []);
 
   const menuList = (
-    <div className="flex md:flex-row flex-col gap-8 font-semibold text-xl">
+    <div className="flex md:flex-row flex-col gap-4 md:gap-8 font-semibold text-base md:text-xl">
       <NavLink to="/" className="hover:underline underline-offset-8">
         Home
       </NavLink>
