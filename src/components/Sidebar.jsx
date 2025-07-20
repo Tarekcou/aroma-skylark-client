@@ -6,10 +6,10 @@ import { BiCategory } from "react-icons/bi";
 
 const Sidebar = ({ isOpen, onClose }) => {
   return (
-    <>
+    <div className="">
       {/* Overlay for small screens */}
       <div
-        className={`fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden transition-opacity ${
+        className={`fixed inset-0 z-30 bg-black bg-opacity-50 lg:hidden transition-opacity  ${
           isOpen ? "block" : "hidden"
         }`}
         onClick={onClose}
@@ -17,7 +17,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed z-40 top-0 left-0 h-full bg-white w-64 p-5 border-r shadow transform transition-transform duration-300 ease-in-out
+        className={`fixed z-40 top-0 left-0 h-full min-h-full  bg-white w-64 p-5  shadow transform transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:block`}
       >
         {/* Close Button for Mobile */}
@@ -73,7 +73,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </div> */}
         </nav>
       </aside>
-    </>
+    </div>
   );
 };
 

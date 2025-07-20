@@ -35,41 +35,42 @@ const router = createBrowserRouter([
     path: "/",
     element: <HomePage />,
     errorElement: <NotFound />, // 404 for root-level
+    children:[
+      {index: true, element: <AllTransactions />}, // / (root)
+      {path:"login", element: <LoginPage />}
+    ]
+  },
+
+  {
+    path: "/dashboard",
+    element: (
+      <PrivateRoute>
+        <MainLayout />
+      </PrivateRoute>
+    ),
     children: [
-      { index: true, element: <AllTransactions /> }, // / (root)
-      { path: "login", element: <LoginPage /> },
+      {index: true, element: <Dashboard />}, // /dashboard
       {
-        path: "/dashboard",
+        path: "transactions",
         element: (
           <PrivateRoute>
-            <MainLayout />
+            <AllTransactions />
           </PrivateRoute>
-        ),
+        ), // Wrap with PrivateRoute
+      },
+      {
+        path: "categories",
+        element: <CategoryLayout />, // New wrapper
         children: [
-          { index: true, element: <Dashboard /> }, // /dashboard
-          {
-            path: "transactions",
-            element: (
-              <PrivateRoute>
-                <AllTransactions />
-              </PrivateRoute>
-            ), // Wrap with PrivateRoute
-          },
-          {
-            path: "categories",
-            element: <CategoryLayout />, // New wrapper
-            children: [
-              { index: true, element: <CategoryList /> }, // /dashboard/categories
-              { path: ":categoryName", element: <CategoryTransactions /> }, // /dashboard/categories/:name
-            ],
-          },
-          { path: "members", element: <MembersPage /> },
-          { path: "installment", element: <Installment /> },
-          {
-            path: "products",
-            element: <ProductList />,
-          },
+          { index: true, element: <CategoryList /> }, // /dashboard/categories
+          { path: ":categoryName", element: <CategoryTransactions /> }, // /dashboard/categories/:name
         ],
+      },
+      { path: "members", element: <MembersPage /> },
+      { path: "installment", element: <Installment /> },
+      {
+        path: "products",
+        element: <ProductList />,
       },
     ],
   },

@@ -5,7 +5,7 @@ import logo from "../assets/logo.jpg";
 const Footer = () => {
   return (
     <div className="bg-amber-50">
-      <footer className="flex flex-wrap justify-between mx-auto p-5 w-11/12 text-base-content footer">
+      <footer className="flex flex-wrap justify-around mx-auto p-5 w-11/12 text-base-content footer">
         <div className="flex items-center gap-4 space-y-2">
           <img className="rounded w-10 h-10" src={logo} alt="Symence Logo" />
           <div>
@@ -36,7 +36,7 @@ const Footer = () => {
           </Link>
         </nav>
 
-        <nav className="flex flex-col space-y-2">
+        {/* <nav className="flex flex-col space-y-2">
           <h6 className="text-gray-700 footer-title">Follow Us</h6>
           <div className="flex gap-4">
             <a
@@ -64,7 +64,7 @@ const Footer = () => {
               <i className="text-xl fab fa-linkedin"></i>
             </a>
           </div>
-        </nav>
+        </nav> */}
       </footer>
 
       <footer className="bg-amber-50 p-4 border-gray-200 border-t text-sm text-center">

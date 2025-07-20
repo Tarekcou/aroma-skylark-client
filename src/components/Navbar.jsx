@@ -23,14 +23,23 @@ const handleLogout = () => {
       <NavLink to="/" className="hover:underline underline-offset-8">
         Home
       </NavLink>
-      {isAuthenticated ?
-      <button onClick={handleLogout}  className="hover:underline underline-offset-8 btn">
-        Logout
-      </button> :
-      <NavLink to="/login" className="hover:underline underline-offset-8">
-        Login
-      </NavLink>
-     }
+      {isAuthenticated ? (
+        <>
+          <NavLink to="/dashboard" className="hover:underline underline-offset-8">
+            Dashboard
+          </NavLink>
+          <button
+            onClick={handleLogout}
+            className="text-red-500 hover:underline underline-offset-8 btn-sm btn"
+          >
+            Logout
+          </button>
+        </>
+      ) : (
+        <NavLink to="/login" className="hover:underline underline-offset-8">
+          Login
+        </NavLink>
+      )}
       {/* <NavLink to="/products" className="hover:underline underline-offset-8">
         Products
       </NavLink> */}

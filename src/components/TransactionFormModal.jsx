@@ -55,11 +55,21 @@ const TransactionFormModal = ({
     defaultValues: {
       type: entry?.type || type,
       bookId: id || "",
-      date: entry?.date || new Date().toISOString().slice(0, 10),
-      time: entry?.time || "",
+      date:
+        entry?.date ||
+        new Date().toLocaleDateString("en-CA", {
+          timeZone: "Asia/Dhaka",
+        }),
+      time:
+        entry?.time ||
+        new Date().toLocaleTimeString("en-GB", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "Asia/Dhaka",
+        }), // <-- ✅ 24-hour format like "16:30"
       amount: entry?.amount || "",
       remarks: entry?.remarks || "",
-      contact: entry?.contact || "",
       category: entry?.category || "",
       mode: entry?.mode || "",
       extraField: entry?.extraField || "",
@@ -108,14 +118,14 @@ const TransactionFormModal = ({
     <div
       className={
         isModal
-          ? "fixed inset-0 z-50 bg-black/50 flex justify-center items-center overflow-auto p-4 pt-10"
+          ? "fixed inset-0 z-50 bg-black/70 flex justify-center items-center overflow-auto p-4 pt-10"
           : "p-4 max-w-md mx-auto"
       }
     >
       <div
         className={
           isModal
-            ? "bg-white p-6 rounded-lg w-full max-w-md"
+            ? "bg-white p-6 rounded-lg w-full max-w-lg"
             : "bg-white shadow p-4 rounded"
         }
       >
@@ -145,12 +155,12 @@ const TransactionFormModal = ({
             {...register("remarks")}
             placeholder="Description"
           />
-          <input
+          {/* <input
             type="text"
             className="input-bordered w-full input"
             {...register("contact")}
             placeholder="Contact Name"
-          />
+          /> */}
 
           <div>
             <select
