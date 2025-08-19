@@ -161,6 +161,34 @@ const TransactionFormModal = ({
             {...register("contact")}
             placeholder="Contact Name"
           /> */}
+          <div>
+            <select
+              className="w-full select-bordered select"
+              {...register("extraField")}
+            >
+              <option value="">Select New Field</option>
+              {allFields.map((f) => (
+                <option key={f} value={f}>
+                  {f}
+                </option>
+              ))}
+            </select>
+            <div className="flex gap-2 mt-2">
+              <input
+                value={newField}
+                onChange={(e) => setNewField(e.target.value)}
+                placeholder="New field"
+                className="input-bordered w-full input input-sm"
+              />
+              <button
+                type="button"
+                onClick={addField}
+                className="btn-outline btn btn-sm"
+              >
+                +
+              </button>
+            </div>
+          </div>
 
           <div>
             <select
@@ -202,35 +230,6 @@ const TransactionFormModal = ({
             <option value="Bkash">Bkash</option>
             <option value="Nagad">Nagad</option>
           </select>
-
-          <div>
-            <select
-              className="w-full select-bordered select"
-              {...register("extraField")}
-            >
-              <option value="">Select Extra Field</option>
-              {allFields.map((f) => (
-                <option key={f} value={f}>
-                  {f}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2 mt-2">
-              <input
-                value={newField}
-                onChange={(e) => setNewField(e.target.value)}
-                placeholder="New field"
-                className="input-bordered w-full input input-sm"
-              />
-              <button
-                type="button"
-                onClick={addField}
-                className="btn-outline btn btn-sm"
-              >
-                +
-              </button>
-            </div>
-          </div>
 
           <div className="flex justify-end gap-3">
             {isModal && (
