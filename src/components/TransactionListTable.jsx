@@ -90,6 +90,7 @@ const exportToExcel = () => {
     Date: new Date(e.date).toLocaleString(),
     Remarks: e.remarks || "-",
     Category: e.category || "-",
+    Type: e.extraField || "-",
     Mode: e.mode || "-",
     Amount: `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
   }));
@@ -108,7 +109,7 @@ const exportToExcel = () => {
     doc.text("Transaction List", 14, 16);
     autoTable(doc, {
       startY: 20,
-      head: [["#", "Date", "Remarks", "Category", "Mode", 
+      head: [["#", "Date", "Remarks", "Category","Type", "Mode", 
         // "Bill", 
         "Amount"]],
       body: filteredEntries.map((e, i) => [
@@ -116,6 +117,7 @@ const exportToExcel = () => {
         new Date(e.date).toLocaleString(),
         e.remarks || "-",
         e.category || "-",
+        e.extraField || "-",
         e.mode || "-",
         // e.billNo || "-",
         `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
