@@ -29,6 +29,7 @@ const isTransactionsTab = location.pathname === "/dashboard";
     queryKey: ["all-entries"],
     queryFn: async () => {
       const res = await axiosPublic.get("/entries");
+      console.log(res.data.entries)
       return res.data?.entries || [];
     },
   });

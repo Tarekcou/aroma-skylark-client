@@ -7,6 +7,9 @@ import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import { FaFileExcel } from "react-icons/fa";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -17,7 +20,7 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
   const [page, setPage] = useState(1);
   const [editEntry, setEditEntry] = useState(null);
   const { login, isAuthenticated } = useAuth();
-
+  console.log(entries)
   const categories = useMemo(
     () => ["All", ...new Set(entries.map((e) => e.category).filter(Boolean))],
     [entries]
@@ -29,16 +32,21 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
         const matchSearch =
           !searchText ||
           entry.remarks?.toLowerCase().includes(searchText.toLowerCase()) ||
-          entry.amount?.toString().includes(searchText);
+          entry.amount?.toString().includes(searchText) ||
+          entry.extraField?.toLowerCase().includes(searchText.toLowerCase()); // ✅ added extraField search
+
         const matchCategory =
           selectedCategory === "All" || entry.category === selectedCategory;
+
         const matchDate =
           !selectedDate ||
           new Date(entry.date).toISOString().slice(0, 10) === selectedDate;
+
         return matchSearch && matchCategory && matchDate;
       }),
     [entries, searchText, selectedCategory, selectedDate]
   );
+
 
   const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE);
   const paginatedEntries = filteredEntries.slice(
@@ -76,6 +84,24 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
       toast.error("Failed to delete entry");
     }
   };
+const exportToExcel = () => {
+  const worksheetData = filteredEntries.map((e, i) => ({
+    "#": i + 1,
+    Date: new Date(e.date).toLocaleString(),
+    Remarks: e.remarks || "-",
+    Category: e.category || "-",
+    Mode: e.mode || "-",
+    Amount: `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
+  }));
+
+  const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+  saveAs(data, "transactions.xlsx");
+};
 
   const exportToPDF = () => {
     const doc = new jsPDF();
@@ -135,6 +161,9 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
         <button className="btn-outline btn btn-sm" onClick={exportToPDF}>
           <FaFilePdf className="mr-1" /> Export PDF
         </button>
+        <button className="btn-outline btn btn-sm" onClick={exportToExcel}>
+          <FaFileExcel className="mr-1 text-green-600" /> Export Excel
+        </button>
       </div>
 
       {/* Search */}
@@ -163,10 +192,11 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
               <th>Date</th>
               <th>Remarks</th>
               <th>Category</th>
+              <th>Type</th>
               <th>Mode</th>
               {/* <th>Bill</th> */}
               <th>Amount</th>
-              { isAuthenticated && <th>Actions</th> }
+              {isAuthenticated && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -176,6 +206,7 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
                 <td>{new Date(e.date).toLocaleString()}</td>
                 <td>{e.remarks}</td>
                 <td>{e.category}</td>
+                <td>{e.extraField}</td>
                 <td>{e.mode}</td>
                 {/* <td>{e.billNo || "-"}</td> */}
                 <td
