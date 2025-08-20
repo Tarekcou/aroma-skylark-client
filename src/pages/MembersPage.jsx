@@ -117,15 +117,14 @@ const MembersPage = () => {
 const handleDownloadPDF = () => {
   const doc = new jsPDF();
   const today = new Date();
-const formattedDate = today.toLocaleDateString("en-GB").replace(/\//g, "-");
+  const formattedDate = today.toLocaleDateString("en-GB").replace(/\//g, "-");
+
   autoTable(doc, {
     startY: 25,
     head: [["#", "Date", "Name", "Phone", "Subscription", "Total Paid", "Due"]],
     body: members.map((m, i) => {
       const totalPaid = calculateTotalPaid(m);
       const due = calculateDue(m);
-
-    
 
       return [
         i + 1,
@@ -137,10 +136,23 @@ const formattedDate = today.toLocaleDateString("en-GB").replace(/\//g, "-");
         due,
       ];
     }),
+    styles: {
+      lineWidth: 0.2, // Border thickness
+      lineColor: [0, 0, 0], // Black border
+    },
+    headStyles: {
+      fillColor: [220, 220, 220], // Light gray background for header
+      textColor: [0, 0, 0],
+      lineWidth: 0.3,
+      lineColor: [0, 0, 0],
+    },
+    tableLineWidth: 0.2,
+    tableLineColor: [0, 0, 0],
   });
 
-doc.save(`members_${formattedDate}.pdf`);
+  doc.save(`members_${formattedDate}.pdf`);
 };
+
 
 
   return (

@@ -104,27 +104,48 @@ const exportToExcel = () => {
   saveAs(data, "transactions.xlsx");
 };
 
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    doc.text("Transaction List", 14, 16);
-    autoTable(doc, {
-      startY: 20,
-      head: [["#", "Date", "Remarks", "Category","Type", "Mode", 
-        // "Bill", 
-        "Amount"]],
-      body: filteredEntries.map((e, i) => [
-        i + 1,
-        new Date(e.date).toLocaleString(),
-        e.remarks || "-",
-        e.category || "-",
-        e.extraField || "-",
-        e.mode || "-",
-        // e.billNo || "-",
-        `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
-      ]),
-    });
-    doc.save("transactions.pdf");
-  };
+
+
+const exportToPDF = () => {
+  const doc = new jsPDF();
+
+  // Title
+  doc.setFontSize(14);
+  doc.text("Transaction List", 14, 16);
+
+  // Add Table with Borders
+ autoTable(doc, {
+  startY: 20,
+  head: [["#", "Date", "Remarks", "Category","Type", "Mode", "Amount"]],
+  body: filteredEntries.map((e, i) => [
+    i + 1,
+    new Date(e.date).toLocaleString(),
+    e.remarks || "-",
+    e.category || "-",
+    e.extraField || "-",
+    e.mode || "-",
+    `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
+  ]),
+  headStyles: { 
+    fillColor: [220, 220, 220], // Darker gray background
+    textColor: [0, 0, 0],       // Solid black text
+    fontStyle: "bold"           // Bold text for better readability
+  },
+  styles: { 
+    lineColor: [0, 0, 0], 
+    lineWidth: 0.1 
+  }
+});
+
+
+  // Generate Date String for Filename
+  const today = new Date();
+  const dateStr = today.toISOString().split("T")[0]; // e.g. 2025-08-19
+
+  // Save with date
+  doc.save(`transactions_${dateStr}.pdf`);
+};
+
 
   return (
     <div className="space-y-6">

@@ -101,48 +101,64 @@ const Installment = () => {
   };
 
   // 📌 Download PDF
-  const handleDownloadPDF = () => {
-    if (members.length === 0) {
-      toast.error("No members to export");
-      return;
-    }
+const handleDownloadPDF = () => {
+  if (members.length === 0) {
+    toast.error("No members to export");
+    return;
+  }
 
-    const doc = new jsPDF("l", "pt", "a4"); // landscape for wide tables
-    doc.text("Installment Collection", 40, 30);
+  const doc = new jsPDF("l", "pt", "a4"); // landscape for wide tables
 
-    const head = [
-      [
-        "SL",
-        "Flat Owner",
-        "Subscription",
-        ...installments.flatMap((i) => [`${i}-Date`, `${i}-Amount`]),
-        "Total Paid",
-        "Ind. Due",
-      ],
-    ];
+  // 🔹 Add title and date
+  const today = new Date();
+  const dateStr = today.toLocaleDateString("en-GB"); // dd/mm/yyyy
+  doc.text("Installment Collection", 40, 30);
+  doc.text(`Date: ${dateStr}`, doc.internal.pageSize.getWidth() - 100, 30);
 
-    const body = members.map((member, idx) => [
-      idx + 1,
-      member.name,
-      defaultSubscription,
-      ...installments.flatMap((i) => [
-        member[`payment${i}Date`] || "-",
-        member[`payment${i}Amount`] || 0,
-      ]),
-      calculateTotalPaid(member),
-      calculateDue(member),
-    ]);
+  // 🔹 Table headers
+  const head = [
+    [
+      "SL",
+      "Flat Owner",
+      "Subscription",
+      ...installments.flatMap((i) => [`${i}-Date`, `${i}-Amount`]),
+      "Total Paid",
+      "Ind. Due",
+    ],
+  ];
 
-    autoTable(doc, {
-      head,
-      body,
-      startY: 50,
-      styles: { fontSize: 8, cellPadding: 3 },
-      headStyles: { fillColor: [41, 128, 185] },
-    });
+  // 🔹 Table body
+  const body = members.map((member, idx) => [
+    idx + 1,
+    member.name,
+    defaultSubscription,
+    ...installments.flatMap((i) => [
+      member[`payment${i}Date`] || "-",
+      member[`payment${i}Amount`] || 0,
+    ]),
+    calculateTotalPaid(member),
+    calculateDue(member),
+  ]);
 
-    doc.save("installments.pdf");
-  };
+  // 🔹 AutoTable with borders
+  autoTable(doc, {
+    head,
+    body,
+    startY: 50,
+    styles: { 
+      fontSize: 8, 
+      cellPadding: 3, 
+      lineWidth: 0.5,       // border thickness
+      lineColor: [0, 0, 0], // black border
+    },
+    headStyles: { fillColor: [41, 128, 185] },
+  });
+
+  // 🔹 Save with date in filename
+  const fileName = `installments_${today.toISOString().split("T")[0]}.pdf`; // YYYY-MM-DD
+  doc.save(fileName);
+};
+
 
   return (
     <div className="relative space-y-4">
@@ -184,8 +200,8 @@ const Installment = () => {
           </thead>
           <tbody>
             {members.map((member, idx) => {
-              const totalPaid = calculateTotalPaid(member);
-              const due = calculateDue(member);
+                const totalPaid = calculateTotalPaid(member);
+                const due = calculateDue(member);
 
               return (
                 <tr key={member._id}>
