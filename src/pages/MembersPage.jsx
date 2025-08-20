@@ -6,12 +6,17 @@ import toast from "react-hot-toast";
 import MemberModal from "./MemberModal";
 import Swal from "sweetalert2";
 import { MdAdd } from "react-icons/md";
+import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import autoTable from "jspdf-autotable";   // ✅ add this
 
 const MembersPage = () => {
   const [modalData, setModalData] = useState(null);
   const queryClient = useQueryClient();
 
-  const { refetch,data: members = [], isLoading } = useQuery({
+  const { refetch, data: members = [], isLoading } = useQuery({
     queryKey: ["members"],
     queryFn: async () => {
       const res = await axiosPublic.get("/members");
@@ -42,26 +47,81 @@ const MembersPage = () => {
 
     try {
       deleteMutation.mutate(id);
-      // toast.success("Entry deleted");
-
-      // Trigger refetch to refresh the data
       if (refetch) refetch();
     } catch (err) {
       toast.error("Failed to delete entry");
     }
   };
-  
+
+  // 📌 Download as Excel
+  const handleDownloadExcel = () => {
+    if (members.length === 0) {
+      toast.error("No members to export");
+      return;
+    }
+    const worksheet = XLSX.utils.json_to_sheet(members);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const data = new Blob([excelBuffer], {
+      type: "application/octet-stream",
+    });
+    saveAs(data, "members.xlsx");
+  };
+
+  // 📌 Download as PDF
+  const handleDownloadPDF = () => {
+  if (members.length === 0) {
+    toast.error("No members to export");
+    return;
+  }
+
+  const doc = new jsPDF();
+  doc.text("Members List", 14, 15);
+
+  autoTable(doc, {   // ✅ correct usage
+    startY: 25,
+    head: [["#", "Name", "Phone", "Email", "Subscription"]],
+    body: members.map((m, i) => [
+      i + 1,
+      m.name,
+      m.phone,
+      m.email,
+      m.subscription,
+    ]),
+  });
+
+  doc.save("members.pdf");
+};
+
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-xl">👥 Members</h2>
-        <button
-          onClick={() => setModalData({})}
-          className="hidden md:block btn btn-primary"
-        >
-          + Add Member
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleDownloadPDF}
+            className="btn btn-outline btn-sm"
+          >
+            ⬇ PDF
+          </button>
+          <button
+            onClick={handleDownloadExcel}
+            className="btn btn-outline btn-sm"
+          >
+            ⬇ Excel
+          </button>
+          <button
+            onClick={() => setModalData({})}
+            className="hidden md:block btn btn-primary"
+          >
+            + Add Member
+          </button>
+        </div>
       </div>
 
       <div className="bg-white shadow rounded overflow-x-auto">
@@ -110,7 +170,8 @@ const MembersPage = () => {
       >
         <MdAdd /> Add Member
       </button>
-      {members.length == 0 && (
+
+      {members.length === 0 && (
         <p className="flex justify-center items-center min-h-[50vh] text-gray-500 text-center">
           No Members found.
         </p>

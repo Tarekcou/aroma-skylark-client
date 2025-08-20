@@ -7,13 +7,14 @@ const InstallmentEditModal = ({ member, installments, close }) => {
   const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState(() => {
-    const data = {};
-    installments.forEach((i) => {
-      data[`payment${i}Date`] = member[`payment${i}Date`] || "";
-      data[`payment${i}Amount`] = member[`payment${i}Amount`] || 0;
-    });
-    return data;
+  const data = {};
+  installments.forEach((i) => {
+    data[`payment${i}Date`] = member[`payment${i}Date`] || "";
+    data[`payment${i}Amount`] = member[`payment${i}Amount`] || 0;
   });
+  return data;
+});
+
 
   const mutation = useMutation({
     mutationFn: async (updated) =>
