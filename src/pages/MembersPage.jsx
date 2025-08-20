@@ -1,5 +1,5 @@
 // ✅ MembersPage.jsx
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
@@ -21,10 +21,49 @@ const MembersPage = () => {
     queryKey: ["members"],
     queryFn: async () => {
       const res = await axiosPublic.get("/members");
+      console.log(res.data.members)
       return res.data.members || [];
     },
   });
+  const [installments, setInstallments] = useState([]);
+ const getInstallmentsFromMember = (member) => {
+    const keys = Object.keys(member);
+    const payments = keys.filter(
+      (k) => k.startsWith("payment") && k.endsWith("Amount")
+    );
+    const numbers = payments.map((k) => k.match(/\d+/)?.[0]);
+    const uniqueNumbers = Array.from(new Set(numbers)).sort((a, b) => +a - +b);
+    return uniqueNumbers;
+  };
+  useEffect(() => {
+    if (members.length > 0) {
+      const allNumbers = members.flatMap(getInstallmentsFromMember);
+      const uniqueSorted = Array.from(new Set(allNumbers)).sort(
+        (a, b) => +a - +b
+      );
+      setInstallments(uniqueSorted);
+    }
+  }, [members]);
 
+  // Add new installment column dynamically
+  const handleAddInstallment = () => {
+    const nextNumber = installments.length
+      ? `${Number(installments[installments.length - 1]) + 1}`
+      : "1";
+    setInstallments((prev) => [...prev, nextNumber]);
+  };
+
+  const defaultSubscription = 300000;
+ // Calculate totals
+  const calculateTotalPaid = (member) => {
+    return installments.reduce((sum, i) => {
+      return sum + (member[`payment${i}Amount`] || 0);
+    }, 0);
+  };
+
+  const calculateDue = (member) => {
+    return defaultSubscription - calculateTotalPaid(member);
+  };
   const deleteMutation = useMutation({
     mutationFn: async (id) => await axiosPublic.delete(`/members/${id}`),
     onSuccess: () => {
@@ -74,28 +113,33 @@ const MembersPage = () => {
   };
 
   // 📌 Download as PDF
-  const handleDownloadPDF = () => {
-  if (members.length === 0) {
-    toast.error("No members to export");
-    return;
-  }
-
+ // 📌 Download as PDF
+const handleDownloadPDF = () => {
   const doc = new jsPDF();
-  doc.text("Members List", 14, 15);
-
-  autoTable(doc, {   // ✅ correct usage
+  const today = new Date();
+const formattedDate = today.toLocaleDateString("en-GB").replace(/\//g, "-");
+  autoTable(doc, {
     startY: 25,
-    head: [["#", "Name", "Phone", "Email", "Subscription"]],
-    body: members.map((m, i) => [
-      i + 1,
-      m.name,
-      m.phone,
-      m.email,
-      m.subscription,
-    ]),
+    head: [["#", "Date", "Name", "Phone", "Subscription", "Total Paid", "Due"]],
+    body: members.map((m, i) => {
+      const totalPaid = calculateTotalPaid(m);
+      const due = calculateDue(m);
+
+    
+
+      return [
+        i + 1,
+        formattedDate,
+        m.name,
+        m.phone,
+        m.subscription,
+        totalPaid || 0,
+        due,
+      ];
+    }),
   });
 
-  doc.save("members.pdf");
+doc.save(`members_${formattedDate}.pdf`);
 };
 
 
@@ -132,20 +176,24 @@ const MembersPage = () => {
               <th>#</th>
               <th>Name</th>
               <th>Phone</th>
-              <th>Email</th>
               <th>Subscription</th>
+               <th>Total Pmt</th>
+              <th>Ind. Due</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {members.map((m, i) => (
-              <tr key={m._id}>
-                <td>{i + 1}</td>
-                <td>{m.name}</td>
-                <td>{m.phone}</td>
-                <td>{m.email}</td>
-                <td>{m.subscription}</td>
-                <td>
+            {members.map((m, i) => {
+                const totalPaid = calculateTotalPaid(m);
+                  const due = calculateDue(m);
+                  return  <tr key={m._id}>
+                  <td>{i + 1}</td>
+                  <td>{m.name}</td>
+                  <td>{m.phone}</td>
+                  <td>{m.subscription}</td>
+                    <td className="font-semibold text-green-600">{totalPaid || 0}</td>
+                    <td className="font-semibold text-red-600">{due}</td>
+                  <td>
                   <button
                     className="btn-outline btn btn-sm"
                     onClick={() => setModalData(m)}
@@ -160,7 +208,10 @@ const MembersPage = () => {
                   </button>
                 </td>
               </tr>
-            ))}
+            }
+            
+              
+            )}
           </tbody>
         </table>
       </div>

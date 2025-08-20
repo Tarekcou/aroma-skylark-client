@@ -59,12 +59,12 @@ const onSubmit = (formData) => {
             placeholder="Phone"
             className="input-bordered w-full input"
           />
-          <input
+          {/* <input
             {...register("email")}
             placeholder="Email"
             type="email"
             className="input-bordered w-full input"
-          />
+          /> */}
           <input
             {...register("subscription")}
             placeholder="Subscription Amount"
