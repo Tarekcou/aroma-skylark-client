@@ -8,6 +8,8 @@ import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { FaFileExcel, FaFilePdf } from "react-icons/fa";
+import { TbPdf } from "react-icons/tb";
 
 const Installment = () => {
   const [editMember, setEditMember] = useState(null);
@@ -148,13 +150,13 @@ const Installment = () => {
         <h2 className="font-bold text-xl">💰 Construction Installment Collection</h2>
         <div className="flex gap-2">
           <button onClick={handleDownloadPDF} className="btn btn-sm btn-outline">
-            ⬇ PDF
+            <FaFilePdf  className="text-red-600"/> PDF
           </button>
           <button
             onClick={handleDownloadExcel}
             className="btn btn-sm btn-outline"
           >
-            ⬇ Excel
+            <FaFileExcel /> Excel
           </button>
           <button onClick={handleAddInstallment} className="btn btn-sm btn-info">
             + Add Installment Column

@@ -11,6 +11,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";   // ✅ add this
+import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 
 const MembersPage = () => {
   const [modalData, setModalData] = useState(null);
@@ -107,13 +108,13 @@ const MembersPage = () => {
             onClick={handleDownloadPDF}
             className="btn btn-outline btn-sm"
           >
-            ⬇ PDF
+            <FaFilePdf  className="text-red-600"/> PDF
           </button>
           <button
             onClick={handleDownloadExcel}
             className="btn btn-outline btn-sm"
           >
-            ⬇ Excel
+            <FaFileExcel /> Excel
           </button>
           <button
             onClick={() => setModalData({})}

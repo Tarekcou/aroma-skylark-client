@@ -161,7 +161,7 @@ const exportToExcel = () => {
           <FaUndo className="mr-1" /> Reset
         </button>
         <button className="btn-outline btn btn-sm" onClick={exportToPDF}>
-          <FaFilePdf className="mr-1" /> Export PDF
+          <FaFilePdf className="mr-1" />  Export PDF
         </button>
         <button className="btn-outline btn btn-sm" onClick={exportToExcel}>
           <FaFileExcel className="mr-1 text-green-600" /> Export Excel
