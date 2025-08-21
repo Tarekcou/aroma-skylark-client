@@ -1,15 +1,18 @@
 // src/pages/products/ProductList.jsx
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router";
 import axiosPublic from "../../axios/AxiosPublic";
-import { MdAdd } from "react-icons/md";
+import { MdAdd, MdDelete, MdDetails } from "react-icons/md";
 import AddProductModal from "./AddProductModal";
 import { useState } from "react";
+import Swal from "sweetalert2";
+import toast from "react-hot-toast";
 
 const ProductList = () => {
   const [addOpen, setAddOpen] = useState(false);
   const navigate=useNavigate()
-                     
+               const qc = useQueryClient();
+        
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
@@ -19,6 +22,36 @@ const ProductList = () => {
     },
     networkMode: "always",
   });
+  const deleteProduct = useMutation({
+    mutationFn: async (id) => axiosPublic.delete(`/products/${id}`),
+    onSuccess: () => {
+      toast.success("Product deleted successfully");
+      qc.invalidateQueries(["products"]); // refresh product list
+    },
+    onError: (e) => {
+      toast.error(e?.response?.data?.error || "Failed to delete product");
+    },
+  });
+
+  const handleDelete = async (id) => {
+    const result = await Swal.fire({
+      title: "Delete this entry?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!result.isConfirmed) return;
+
+    try {
+      await deleteProduct.mutateAsync(id);
+    } catch (error) {
+      console.log(error?.response?.data?.error || "Failed to delete product");
+    }
+  };
+
+
 
   if (isLoading) return <p>Loading...</p>;
 
@@ -50,7 +83,7 @@ const ProductList = () => {
           <tbody>
             {products.map((p, i) => (
               <tr
-              className="hover:bg-base-200 border-gray-200 border-b text-center cursor-pointer"
+                className="hover:bg-base-200 border-gray-200 border-b text-center cursor-pointer"
                 onClick={() => navigate(`/dashboard/products/${p._id}`)}
                 key={p._id}
               >
@@ -64,13 +97,23 @@ const ProductList = () => {
                   {p.stock ?? (p.totalIn || 0) - (p.totalOut || 0)}
                 </td>
                 <td>{p.remarks || "-"}</td>
-                <td>
+                <td className="flex flex-col gap-3">
                   <Link
                     to={`/dashboard/products/${p._id}`}
-                    className="btn-outline w-36 text-xs btn btn-xs"
+                    className="max-w-36 text-xs btn-accent btn btn-xs"
                   >
-                    View Details
+                     Details
                   </Link>
+                  <button
+                    onClick={(e)=>{
+                      e.stopPropagation(); // prevent parent click
+
+                      handleDelete(p._id);
+                    }}
+                    className="max-w-36 text-white btn-error btn btn-xs"
+                  >
+                    <MdDelete className="text-xl"/>
+                  </button>
                 </td>
               </tr>
             ))}
