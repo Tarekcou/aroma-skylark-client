@@ -7,6 +7,7 @@ import AddProductModal from "./AddProductModal";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
+import { TbListDetails } from "react-icons/tb";
 
 const ProductList = () => {
   const [addOpen, setAddOpen] = useState(false);
@@ -76,7 +77,7 @@ const ProductList = () => {
               <th>Total In</th>
               <th>Total Out</th>
               <th>Stock</th>
-              <th>Remarks</th>
+              {/* <th>Remarks</th> */}
               <th>Actions</th>
             </tr>
           </thead>
@@ -96,23 +97,23 @@ const ProductList = () => {
                 <td className="font-semibold">
                   {p.stock ?? (p.totalIn || 0) - (p.totalOut || 0)}
                 </td>
-                <td>{p.remarks || "-"}</td>
-                <td className="flex flex-col gap-3">
+                {/* <td>{p.remarks || "-"}</td> */}
+                <td className="flex justify-center items-center gap-3">
                   <Link
                     to={`/dashboard/products/${p._id}`}
-                    className="max-w-36 text-xs btn-accent btn btn-xs"
+                    className="text-xs btn-accent btn btn-sm"
                   >
-                     Details
+                    <TbListDetails className="text-lg"/>
                   </Link>
                   <button
-                    onClick={(e)=>{
+                    onClick={(e) => {
                       e.stopPropagation(); // prevent parent click
 
                       handleDelete(p._id);
                     }}
-                    className="max-w-36 text-white btn-error btn btn-xs"
+                    className="text-white btn-error btn btn-sm"
                   >
-                    <MdDelete className="text-xl"/>
+                    <MdDelete className="text-xl" />
                   </button>
                 </td>
               </tr>

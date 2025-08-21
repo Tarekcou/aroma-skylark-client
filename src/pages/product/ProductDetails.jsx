@@ -191,9 +191,9 @@ const ProductDetails = () => {
         </p>
       </div>
 
-      <div className="flex md:flex-row flex-col justify-between items-center gap-3">
+      <div className="flex md:flex-row flex-col justify-between items-center gap-3 shadow-md p-3 card">
         {/* Date filter */}
-        <div className="flex items-end gap-2">
+        <div className="flex items-end gap-2 w-full">
           <div className="flex flex-col">
             <label className="text-xs">From</label>
             <input

@@ -56,7 +56,7 @@ const AddProductModal = ({ isOpen, closeModal }) => {
             required
           />
         </label>
-        <label className="flex flex-col form-control">
+        {/* <label className="flex flex-col form-control">
           <span className="label-text">Remarks</span>
           <input
             className="input-bordered input"
@@ -65,7 +65,7 @@ const AddProductModal = ({ isOpen, closeModal }) => {
               setFormData((f) => ({ ...f, remarks: e.target.value }))
             }
           />
-        </label>
+        </label> */}
         <div className="flex justify-end gap-2">
           <button
             type="button"
