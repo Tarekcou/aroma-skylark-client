@@ -37,19 +37,21 @@ const ProductUpdateModal = ({
   }, []);
 
   const mutation = useMutation({
-    mutationFn: async ({ productId, type, quantity }) => {
+    mutationFn: async ({ productId, type, quantity, date, remarks }) => {
       if (!productId) throw new Error("Product ID is required");
       const qty = Number(quantity);
       if (isNaN(qty) || qty <= 0) throw new Error("Invalid quantity");
 
-      // Assuming backend endpoint handles the logic:
       const res = await axiosPublic.put(`/products/${productId}`, {
         type,
         quantity: qty,
+        date, // ✅ include date
+        remarks, // ✅ include remarks
       });
 
       return res.data;
     },
+
     onSuccess: () => {
       toast.success("Stock updated");
       queryClient.invalidateQueries(["products"]);
@@ -60,7 +62,6 @@ const ProductUpdateModal = ({
       toast.error(error?.response?.data?.message || "Update failed");
     },
   });
-
 
   const resetForm = () => {
     setFormData({
@@ -74,11 +75,14 @@ const ProductUpdateModal = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    mutation.mutate({
-      productId: formData.productId,
-      type: formData.type,
-      quantity: formData.quantity,
-    });
+   mutation.mutate({
+     productId: formData.productId,
+     type: formData.type,
+     quantity: formData.quantity,
+     date: formData.date,
+     remarks: formData.remarks,
+   });
+
   };
 
   if (!isOpen) return null;

@@ -26,6 +26,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import TransactionListTable from './components/TransactionListTable.jsx';
 import HomeLayout from './layout/HomeLayout.jsx';
+import ProductDetails from './pages/product/ProductDetails.jsx';
 
 
 const queryClient = new QueryClient();
@@ -71,6 +72,10 @@ const router = createBrowserRouter([
       {
         path: "products",
         element: <ProductList />,
+      },
+      {
+        path: "products/:id",
+        element: <ProductDetails />,
       },
     ],
   },
