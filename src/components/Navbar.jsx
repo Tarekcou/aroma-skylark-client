@@ -19,7 +19,7 @@ const handleLogout = () => {
   }, []);
 
   const menuList = (
-    <div className="flex md:flex-row flex-col gap-4 md:gap-8 font-semibold text-base md:text-xl">
+    <div className="flex md:flex-row flex-col gap-4 md:gap-8 font-semibold text-base md:text-lg">
       <NavLink to="/" className="hover:underline underline-offset-8">
         Home
       </NavLink>
@@ -92,12 +92,12 @@ const handleLogout = () => {
 
           <a className="flex justify-center items-center gap-2 text-2xl btn btn-ghost">
             <img
-              className="rounded-sm w-6 md:w-8"
+              className="rounded-sm w-4 md:w-6"
               src={logo}
               alt="Symence Logo"
             />
             <p className="font-bold tracking-tight">
-              A<span className="text-purple-600 text-xl md:text-3xl">r</span>ma
+              A<span className="text-purple-600 text-lg md:text-2xl">r</span>ma
               Skylark
             </p>
           </a>

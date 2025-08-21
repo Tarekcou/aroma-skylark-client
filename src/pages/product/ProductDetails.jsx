@@ -5,7 +5,12 @@ import axiosPublic from "../../axios/AxiosPublic";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
-import { MdArrowBack, MdBackHand } from "react-icons/md";
+import { MdArrowBack, MdBackHand, MdFileUploadOff } from "react-icons/md";
+import { FaFileExcel, FaFilePdf } from "react-icons/fa";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";// <- default import
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -93,6 +98,41 @@ const ProductDetails = () => {
       date: log.date ? new Date(log.date).toISOString().slice(0, 10) : "",
     });
   };
+  const exportPDF = (logs, productName) => {
+    const doc = new jsPDF();
+
+    doc.text(`${productName} - Stock Logs`, 14, 20);
+
+    autoTable(doc, {
+      head: [["Date","Type", "Quantity", "Remarks","Stock", ]],
+      body: logs.map((log) => [log.date,log.type, log.quantity, log.remarks,log.balance]),
+      startY: 30,
+    });
+
+    doc.save(`${productName}-stock-logs.pdf`);
+  };
+
+  const exportExcel = (logs, productName) => {
+    const worksheet = XLSX.utils.json_to_sheet(
+      logs.map((log) => ({
+        Date:log.date,
+        Type: log.type,
+        Quantity: log.quantity,
+        Remarks: log.remarks,
+        Stock: log.balance, // Assuming balance is the stock after this transaction
+      }))
+    );
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Logs");
+
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, `${productName}-stock-logs.xlsx`);
+  };
 
   return (
     <div className="space-y-4 md:p-4">
@@ -151,29 +191,48 @@ const ProductDetails = () => {
         </p>
       </div>
 
-      {/* Date filter */}
-      <div className="flex items-end gap-2">
-        <div className="flex flex-col">
-          <label className="text-xs">From</label>
-          <input
-            type="date"
-            className="input-bordered input"
-            value={range.from}
-            onChange={(e) => setRange((r) => ({ ...r, from: e.target.value }))}
-          />
+      <div className="flex md:flex-row flex-col justify-between items-center gap-3">
+        {/* Date filter */}
+        <div className="flex items-end gap-2">
+          <div className="flex flex-col">
+            <label className="text-xs">From</label>
+            <input
+              type="date"
+              className="input-bordered input"
+              value={range.from}
+              onChange={(e) =>
+                setRange((r) => ({ ...r, from: e.target.value }))
+              }
+            />
+          </div>
+          <div className="flex flex-col">
+            <label className="text-xs">To</label>
+            <input
+              type="date"
+              className="input-bordered input"
+              value={range.to}
+              onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
+            />
+          </div>
+          <button onClick={onFilter} className="btn btn-sm btn-primary">
+            Filter
+          </button>
         </div>
-        <div className="flex flex-col">
-          <label className="text-xs">To</label>
-          <input
-            type="date"
-            className="input-bordered input"
-            value={range.to}
-            onChange={(e) => setRange((r) => ({ ...r, to: e.target.value }))}
-          />
+        <div className="flex gap-2">
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => exportPDF(product.logs, product.name)}
+          >
+            <FaFilePdf /> PDF
+          </button>
+
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => exportExcel(product.logs, product.name)}
+          >
+            <FaFileExcel /> Excel
+          </button>
         </div>
-        <button onClick={onFilter} className="btn btn-sm btn-primary">
-          Filter
-        </button>
       </div>
 
       {/* Add new log */}
@@ -231,6 +290,7 @@ const ProductDetails = () => {
       </div>
 
       {/* Logs table */}
+      {/* Logs table */}
       <div className="bg-white shadow rounded-lg overflow-x-auto text-xl">
         <table className="table table-zebra w-full">
           <thead>
@@ -239,6 +299,7 @@ const ProductDetails = () => {
               <th>Type</th>
               <th>Qty</th>
               <th>Remarks</th>
+              <th>Stock</th> {/* <-- running balance after this txn */}
               <th>Actions</th>
             </tr>
           </thead>
@@ -318,6 +379,10 @@ const ProductDetails = () => {
                       log.remarks || "-"
                     )}
                   </td>
+
+                  {/* NEW: show the running balance stored by the backend */}
+                  <td>{log.balance ?? "-"}</td>
+
                   <td className="flex gap-2">
                     {isEdit ? (
                       <>
@@ -373,7 +438,7 @@ const ProductDetails = () => {
             })}
             {(product.logs || []).length === 0 && (
               <tr>
-                <td colSpan={5} className="py-6 text-gray-500 text-center">
+                <td colSpan={6} className="py-6 text-gray-500 text-center">
                   No transactions found
                 </td>
               </tr>
