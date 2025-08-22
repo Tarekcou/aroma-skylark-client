@@ -222,7 +222,7 @@ const TransactionListTable = ({ entries = [], refetch }) => {
                   {(page - 1) * ITEMS_PER_PAGE + i + 1}
                 </Text>
                 <Text style={styles.cell}>
-                  {new Date(e.date).toLocaleString("bn-BD")}
+                  {new Date(e.date).toLocaleDateString("bn-BD")}
                 </Text>
                 <Text style={styles.cell}>{e.remarks || "-"}</Text>
                 <Text style={styles.cell}>{e.category || "-"}</Text>
@@ -358,7 +358,7 @@ const TransactionListTable = ({ entries = [], refetch }) => {
             {paginatedEntries.map((e, i) => (
               <tr key={i}>
                 <td>{(page - 1) * ITEMS_PER_PAGE + i + 1}</td>
-                <td>{new Date(e.date).toLocaleString("bn-BD")}</td>
+                <td> {new Date(e.date).toLocaleDateString("bn-BD")}</td>
                 <td>{e.remarks}</td>
                 <td>{e.category}</td>
                 <td>{e.extraField}</td>
