@@ -344,29 +344,58 @@ const MembersPage = () => {
       {/* PDF Preview Modal */}
       {showPDFPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
-          <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
-            <PDFViewer width="100%" height="100%">
-              <MyDocument
-                members={members}
-                formattedDate={formattedDate}
-                calculateTotalPaid={calculateTotalPaid}
-                calculateDue={calculateDue}
-              />
-            </PDFViewer>
-            <div className="right-10 bottom-10 absolute flex justify-end gap-2">
+          <div className="relative bg-white p-2 rounded-lg w-full h-[90vh]">
+            {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (
+              <div className="flex flex-col justify-center items-center gap-4 h-full">
+                <p className="text-center">
+                  PDF preview is not supported on mobile.
+                </p>
+                <button
+                  className="btn btn-primary"
+                  onClick={async () => {
+                    const blob = await pdf(
+                      <MyDocument
+                        members={members}
+                        formattedDate={formattedDate}
+                        calculateTotalPaid={calculateTotalPaid}
+                        calculateDue={calculateDue}
+                      />
+                    ).toBlob();
+                    const url = URL.createObjectURL(blob);
+                    window.open(url, "_blank");
+                  }}
+                >
+                  Open PDF
+                </button>
+              </div>
+            ) : (
+              <PDFViewer width="100%" height="100%">
+                <MyDocument
+                  members={members}
+                  formattedDate={formattedDate}
+                  calculateTotalPaid={calculateTotalPaid}
+                  calculateDue={calculateDue}
+                />
+              </PDFViewer>
+            )}
+
+            <div className="right-4 bottom-4 absolute flex gap-2">
               <button
                 className="btn-active btn"
                 onClick={() => setShowPDFPreview(false)}
               >
                 Close
               </button>
-              <button className="btn btn-primary" onClick={handleDownloadPDF}>
-                Download
-              </button>
+              {!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
+                <button className="btn btn-primary" onClick={handleDownloadPDF}>
+                  Download
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
+
       {/* Modal */}
       {modalData && (
         <MemberModal data={modalData} closeModal={() => setModalData(null)} />
