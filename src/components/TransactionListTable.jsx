@@ -84,7 +84,7 @@ const TransactionListTable = ({ entries = [], refetch }) => {
     [entries]
   );
   const types = useMemo(
-    () => ["All", ...new Set(entries.map((e) => e.extraField).filter(Boolean))],
+    () => ["All", ...new Set(entries.map((e) => e.type).filter(Boolean))],
     [entries]
   );
   const modes = useMemo(
@@ -99,14 +99,14 @@ const TransactionListTable = ({ entries = [], refetch }) => {
         !searchText ||
         entry.remarks?.toLowerCase().includes(searchText.toLowerCase()) ||
         entry.amount?.toString().includes(searchText) ||
-        entry.extraField?.toLowerCase().includes(searchText.toLowerCase()) ||
+        entry.type?.toLowerCase().includes(searchText.toLowerCase()) ||
         entry.category?.toLowerCase().includes(searchText.toLowerCase()) ||
         entry.mode?.toLowerCase().includes(searchText.toLowerCase());
 
       const matchCategory =
         selectedCategory === "All" || entry.category === selectedCategory;
       const matchType =
-        selectedType === "All" || entry.extraField === selectedType;
+        selectedType === "All" || entry.type === selectedType;
       const matchMode = selectedMode === "All" || entry.mode === selectedMode;
       const matchDate =
         !selectedDate ||
@@ -171,7 +171,7 @@ const TransactionListTable = ({ entries = [], refetch }) => {
       Date: new Date(e.date).toLocaleString("bn-BD"),
       Remarks: e.remarks || "-",
       Category: e.category || "-",
-      Type: e.extraField || "-",
+      Type: e.type || "-",
       Mode: e.mode || "-",
       Amount: `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
     }));
@@ -203,10 +203,11 @@ const TransactionListTable = ({ entries = [], refetch }) => {
             <View style={styles.row}>
               {[
                 "#",
-                "তারিখ",
+                "Date",
                 "Remarks",
                 "Category",
                 "Type",
+                "Division",
                 "Mode",
                 "Amount",
               ].map((h, i) => (
@@ -226,7 +227,8 @@ const TransactionListTable = ({ entries = [], refetch }) => {
                 </Text>
                 <Text style={styles.cell}>{e.remarks || "-"}</Text>
                 <Text style={styles.cell}>{e.category || "-"}</Text>
-                <Text style={styles.cell}>{e.extraField || "-"}</Text>
+                <Text style={styles.cell}>{e.type || "-"}</Text>
+                <Text style={styles.cell}>{e.division || "-"}</Text>
                 <Text style={styles.cell}>{e.mode || "-"}</Text>
                 <Text style={styles.cell}>
                   {e.type === "cash-in" ? `+ ${e.amount}` : `- ${e.amount}`}
@@ -349,6 +351,7 @@ const TransactionListTable = ({ entries = [], refetch }) => {
               <th>Remarks</th>
               <th>Category</th>
               <th>Type</th>
+              <th>Division</th>
               <th>Mode</th>
               <th>Amount</th>
               {isAuthenticated && <th>Actions</th>}
@@ -361,7 +364,8 @@ const TransactionListTable = ({ entries = [], refetch }) => {
                 <td> {new Date(e.date).toLocaleDateString("bn-BD")}</td>
                 <td>{e.remarks}</td>
                 <td>{e.category}</td>
-                <td>{e.extraField}</td>
+                <td>{e.type}</td>
+                <td>{e.division}</td>
                 <td>{e.mode}</td>
                 <td
                   className={
