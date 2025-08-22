@@ -52,7 +52,6 @@ const Dashboard = () => {
   const dailyExpenses = useMemo(() => {
     if (!entries.length) return [];
     return entries
-      .filter((e) => e.type === "cash-out")
       .reduce((acc, curr) => {
         const found = acc.find((d) => d.date === curr.date);
         if (found) found.amount += curr.amount;
@@ -65,7 +64,6 @@ const Dashboard = () => {
   const monthlyCategoryExpenses = useMemo(() => {
     if (!entries.length) return [];
     return entries
-      .filter((e) => e.type === "cash-out")
       .reduce((acc, curr) => {
         const found = acc.find((d) => d.category === curr.category);
         if (found) found.amount += curr.amount;
@@ -77,7 +75,6 @@ const Dashboard = () => {
   const expenseModeSummary = useMemo(() => {
     if (!entries.length) return [];
     return entries
-      .filter((e) => e.type === "cash-out")
       .reduce((acc, curr) => {
         const found = acc.find((d) => d.mode === curr.mode);
         if (found) found.amount += curr.amount;
