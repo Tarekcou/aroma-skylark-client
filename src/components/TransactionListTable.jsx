@@ -359,7 +359,7 @@ const handlePrintPreview = () => {
               <th>Category</th>
               <th>Type</th>
               <th>Division</th>
-                            <th>Details</th>
+                <th>Details</th>
 
               <th>Pmt Mode</th>
               <th>Amount</th>
@@ -370,7 +370,7 @@ const handlePrintPreview = () => {
           <tbody>
             ${tableRows}
             <tr>
-              <td colspan="6"></td>
+              <td colspan="7"></td>
               <td><b>Total Expense</b></td>
               <td colspan="3">${totalExpense}</td>
             </tr>
@@ -448,6 +448,7 @@ const handlePrintPreview = () => {
       Remarks: e.remarks || "-",
       Category: e.category || "-",
       Type: e.type || "-",
+      Division: e.division || "-", // 🔹 NEW
       details: e.details || "-",
 
       PaymentMode: e.mode || "-",
@@ -467,12 +468,14 @@ const handlePrintPreview = () => {
       Remarks: "",
       Category: "",
       Type: "",
-      Details: "",
-      PaymentMode: "Total Expense",
+      Division: "",
+      details: "",
+      PaymentMode: "Total Expense", // This will span multiple columns in Excel
       Amount: "",
       Balance: "",
-      Expenses: totalExpense,
+      Expenses: totalExpense, // Total amount aligned under Expenses column
     });
+
 
     setPreviewData(worksheetData);
     setPreviewVisible(true);
@@ -671,7 +674,7 @@ const handlePrintPreview = () => {
           {/* 🔹 Footer for total expense */}
           <tfoot>
             <tr className="bg-base-200 font-bold text-sm text-center">
-              <td colSpan={9}>Total Expenses</td>
+              <td colSpan={10}>Total Expenses</td>
               {/* <td>-</td> */}
               <td className="text-red-600">{totalExpense}</td>
               {isAuthenticated && <td></td>}
