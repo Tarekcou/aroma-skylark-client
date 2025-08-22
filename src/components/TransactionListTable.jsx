@@ -18,6 +18,7 @@ import {
   Font,
   pdf,
 } from "@react-pdf/renderer";
+import { useQuery } from "@tanstack/react-query";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -71,12 +72,14 @@ const styles = StyleSheet.create({
 const TransactionListTable = ({ entries = [], refetch }) => {
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedDivision, setSelectedDivision] = useState("All");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedMode, setSelectedMode] = useState("All");
   const [selectedDate, setSelectedDate] = useState("");
   const [page, setPage] = useState(1);
   const [editEntry, setEditEntry] = useState(null);
   const { isAuthenticated } = useAuth();
+const [previewDoc, setPreviewDoc] = useState(null);
 
   // 🔹 Unique filter options
   const categories = useMemo(
@@ -92,6 +95,19 @@ const TransactionListTable = ({ entries = [], refetch }) => {
     [entries]
   );
 
+  const division = useMemo(
+    () => ["All", ...new Set(entries.map((e) => e.division).filter(Boolean))],
+    [entries]
+  );
+
+  const { data: members = [] } = useQuery({
+    queryKey: ["members"],
+    queryFn: async () => {
+      const res = await axiosPublic.get("/members");
+      return res.data.members || [];
+    },
+  });
+
   // 🔹 Filtering logic
   const filteredEntries = useMemo(() => {
     return entries.filter((entry) => {
@@ -99,21 +115,28 @@ const TransactionListTable = ({ entries = [], refetch }) => {
         !searchText ||
         entry.remarks?.toLowerCase().includes(searchText.toLowerCase()) ||
         entry.amount?.toString().includes(searchText) ||
+        entry.division?.toString().includes(searchText) ||
         entry.type?.toLowerCase().includes(searchText.toLowerCase()) ||
         entry.category?.toLowerCase().includes(searchText.toLowerCase()) ||
         entry.mode?.toLowerCase().includes(searchText.toLowerCase());
 
       const matchCategory =
         selectedCategory === "All" || entry.category === selectedCategory;
-      const matchType =
-        selectedType === "All" || entry.type === selectedType;
+      const matchType = selectedType === "All" || entry.type === selectedType;
       const matchMode = selectedMode === "All" || entry.mode === selectedMode;
+      const matchDivision =
+        selectedDivision === "All" || entry.division === selectedDivision;
       const matchDate =
         !selectedDate ||
         new Date(entry.date).toISOString().slice(0, 10) === selectedDate;
 
       return (
-        matchSearch && matchCategory && matchType && matchMode && matchDate
+        matchSearch &&
+        matchCategory &&
+        matchType &&
+        matchMode &&
+        matchDate &&
+        matchDivision
       );
     });
   }, [
@@ -123,13 +146,10 @@ const TransactionListTable = ({ entries = [], refetch }) => {
     selectedType,
     selectedMode,
     selectedDate,
+    selectedDivision,
   ]);
 
   const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE);
-  const paginatedEntries = filteredEntries.slice(
-    (page - 1) * ITEMS_PER_PAGE,
-    page * ITEMS_PER_PAGE
-  );
 
   // 🔹 Reset filters
   const handleReset = () => {
@@ -163,20 +183,303 @@ const TransactionListTable = ({ entries = [], refetch }) => {
       toast.error("Failed to delete entry");
     }
   };
+ 
+  // 🔹 Compute running balance and expenses dynamically
+ const entriesWithBalanceAndExpense = useMemo(() => {
+   // Total cash available from members
+   const totalInstallmentCashIn = members.reduce(
+     (sum, m) => sum + Number(m.installmentTotal || 0),
+     0
+   );
 
-  // 🔹 Export Excel (unchanged)
-  const exportToExcel = () => {
-    const worksheetData = filteredEntries.map((e, i) => ({
+   let runningBalance = totalInstallmentCashIn;
+   let runningExpenses = 0;
+
+   return filteredEntries.map((entry) => {
+     const amount = Number(entry.amount || 0);
+
+     runningExpenses += amount; // cumulative expense
+     runningBalance -= amount; // subtract from balance
+
+     return {
+       ...entry,
+       balance: runningBalance,
+       expense: runningExpenses, // cumulative expense up to this row
+     };
+   });
+ }, [filteredEntries, members]);
+
+
+
+
+
+  // 🔹 Total expense for footer
+  const totalExpense = useMemo(() => {
+    return filteredEntries
+      .reduce((sum, e) => sum + (e.amount || 0), 0);
+  }, [filteredEntries]);
+
+  // 🔹 Use entriesWithBalanceAndExpense for table & pagination
+  const paginatedEntries = entriesWithBalanceAndExpense.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
+
+  // 🔹 Export PDF with @react-pdf/renderer
+//  const exportToPDF = async () => {
+//    const today = new Date();
+//    const dateStr = today.toLocaleDateString("en-GB"); // dd/mm/yyyy
+
+//    // Calculate total expense
+//    const totalExpense = paginatedEntries.reduce(
+//      (sum, e) => sum + Number(e.expense || 0),
+//      0
+//    );
+
+//    const MyDocument = (
+//      <Document>
+//        <Page size="A4" style={styles.page}>
+//          <Text style={styles.header}>All Transactions</Text>
+//          <Text style={styles.subHeader}>Date: {dateStr}</Text>
+
+//          <View style={styles.table}>
+//            {/* Header */}
+//            <View style={styles.row}>
+//              {[
+//                "#",
+//                "Date",
+//                "Remarks",
+//                "Category",
+//                "Type",
+//                "Division",
+//                "Pmt Mode",
+//                "Amount",
+//                "Balance",
+//                "Expenses",
+//              ].map((h, i) => (
+//                <Text key={i} style={[styles.cell, styles.headerCell]}>
+//                  {h}
+//                </Text>
+//              ))}
+//            </View>
+
+//            {/* Rows */}
+//            {paginatedEntries.map((e, i) => (
+//              <View key={i} style={styles.row}>
+//                <Text style={styles.cell}>
+//                  {(page - 1) * ITEMS_PER_PAGE + i + 1}
+//                </Text>
+//                <Text style={styles.cell}>
+//                  {new Date(e.date).toLocaleDateString("bn-BD")}
+//                </Text>
+//                <Text style={styles.cell}>{e.remarks || "-"}</Text>
+//                <Text style={styles.cell}>{e.category || "-"}</Text>
+//                <Text style={styles.cell}>{e.type || "-"}</Text>
+//                <Text style={styles.cell}>{e.division || "-"}</Text>
+//                <Text style={styles.cell}>{e.mode || "-"}</Text>
+//                <Text style={styles.cell}>{e.amount || "-"}</Text>
+//                <Text style={styles.cell}>{e.balance || "-"}</Text>
+//                <Text style={styles.cell}>{e.expense || "-"}</Text>
+//              </View>
+//            ))}
+
+//            {/* Total Expense Row */}
+//            <View style={styles.row}>
+//              <Text style={styles.cell}></Text>
+//              <Text style={styles.cell}></Text>
+//              <Text style={styles.cell}></Text>
+//              <Text style={styles.cell}></Text>
+//              <Text style={styles.cell}></Text>
+//              <Text style={styles.cell}></Text>
+//              <Text style={styles.cell}>Total Expense</Text>
+//              <Text style={styles.cell}></Text>
+//              <Text style={styles.cell}></Text>
+//              <Text style={styles.cell}>{totalExpense}</Text>
+//            </View>
+//          </View>
+//        </Page>
+//      </Document>
+//    );
+
+//    const blob = await pdf(MyDocument).toBlob();
+//    saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
+//  };
+const handlePrintPreview = () => {
+  if (!paginatedEntries || paginatedEntries.length === 0) {
+    toast.error("No entries to print");
+    return;
+  }
+
+  const totalExpense = paginatedEntries.reduce(
+    (sum, e) => sum + Number(e.expense || 0),
+    0
+  );
+
+  // Build HTML table for print
+  const tableRows = paginatedEntries
+    .map(
+      (e, i) => `
+      <tr>
+        <td>${(page - 1) * ITEMS_PER_PAGE + i + 1}</td>
+        <td>${new Date(e.date).toLocaleDateString("bn-BD")}</td>
+        <td>${e.remarks || "-"}</td>
+        <td>${e.category || "-"}</td>
+        <td>${e.type || "-"}</td>
+        <td>${e.division || "-"}</td>
+                <td>${e.details || "-"}</td>
+
+        <td>${e.mode || "-"}</td>
+        <td>${e.amount || "-"}</td>
+        <td>${e.balance || "-"}</td>
+        <td>${e.expense || "-"}</td>
+      </tr>
+    `
+    )
+    .join("");
+
+  const html = `
+    <html>
+      <head>
+        <title>All Transactions</title>
+        <style>
+          table { width: 100%; border-collapse: collapse; }
+          th, td { border: 1px solid #000; padding: 5px; text-align: center; }
+          th { background-color: #f0f0f0; }
+        </style>
+      </head>
+      <body>
+        <h2>All Transactions</h2>
+        <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Remarks</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Division</th>
+                            <th>Details</th>
+
+              <th>Pmt Mode</th>
+              <th>Amount</th>
+              <th>Balance</th>
+              <th>Expenses</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+            <tr>
+              <td colspan="6"></td>
+              <td><b>Total Expense</b></td>
+              <td colspan="3">${totalExpense}</td>
+            </tr>
+          </tbody>
+        </table>
+      </body>
+    </html>
+  `;
+
+  // Open new window and trigger print
+  const printWindow = window.open("", "");
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+};
+
+
+ 
+
+  // const exportToExcel = () => {
+  //   const worksheetData = paginatedEntries.map((e, i) => ({
+  //     "#": i + 1,
+  //     Date: new Date(e.date).toLocaleString("bn-BD"),
+  //     Remarks: e.remarks || "-",
+  //     Category: e.category || "-",
+  //     Type: e.type || "-",
+  //     PaymentMode: e.mode || "-",
+  //     Amount: e.amount || "-",
+  //     Balance: e.balance || "-",
+  //     Expenses: e.expense || "-",
+  //   }));
+
+  //   // Calculate total expense
+  //   const totalExpense = paginatedEntries.reduce(
+  //     (sum, e) => sum + Number(e.expense || 0),
+  //     0
+  //   );
+
+  //   // Add a total row
+  //   worksheetData.push({
+  //     "#": "",
+  //     Date: "",
+  //     Remarks: "",
+  //     Category: "",
+  //     Type: "",
+  //     PaymentMode: "Total Expense",
+  //     Amount: "",
+  //     Balance: "",
+  //     Expenses: totalExpense,
+  //   });
+
+  //   const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+  //   const workbook = XLSX.utils.book_new();
+  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+
+  //   const excelBuffer = XLSX.write(workbook, {
+  //     bookType: "xlsx",
+  //     type: "array",
+  //   });
+
+  //   // Save file
+  //   const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+  //   saveAs(blob, "Transactions.xlsx");
+  // };
+  
+  
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewData, setPreviewData] = useState([]);
+
+  const preparePreview = () => {
+    const worksheetData = paginatedEntries.map((e, i) => ({
       "#": i + 1,
       Date: new Date(e.date).toLocaleString("bn-BD"),
       Remarks: e.remarks || "-",
       Category: e.category || "-",
       Type: e.type || "-",
-      Mode: e.mode || "-",
-      Amount: `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
+      details: e.details || "-",
+
+      PaymentMode: e.mode || "-",
+      Amount: e.amount || "-",
+      Balance: e.balance || "-",
+      Expenses: e.expense || "-",
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const totalExpense = paginatedEntries.reduce(
+      (sum, e) => sum + Number(e.expense || 0),
+      0
+    );
+
+    worksheetData.push({
+      "#": "",
+      Date: "",
+      Remarks: "",
+      Category: "",
+      Type: "",
+      Details: "",
+      PaymentMode: "Total Expense",
+      Amount: "",
+      Balance: "",
+      Expenses: totalExpense,
+    });
+
+    setPreviewData(worksheetData);
+    setPreviewVisible(true);
+  };
+
+  const downloadExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(previewData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
 
@@ -185,63 +488,8 @@ const TransactionListTable = ({ entries = [], refetch }) => {
       type: "array",
     });
 
-    const data = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-    });
-    saveAs(data, "transactions.xlsx");
-  };
-
-  // 🔹 Export PDF with @react-pdf/renderer
-  const exportToPDF = async () => {
-    const MyDocument = (
-      <Document>
-        <Page size="A4" style={styles.page}>
-          <Text style={styles.header}> Transactions </Text>
-
-          <View style={styles.table}>
-            {/* Header */}
-            <View style={styles.row}>
-              {[
-                "#",
-                "Date",
-                "Remarks",
-                "Category",
-                "Type",
-                "Division",
-                "Mode",
-                "Amount",
-              ].map((h, i) => (
-                <Text key={i} style={[styles.cell, styles.headerCell]}>
-                  {h}
-                </Text>
-              ))}
-            </View>
-            {/* Rows */}
-            {paginatedEntries.map((e, i) => (
-              <View key={i} style={styles.row}>
-                <Text style={styles.cell}>
-                  {(page - 1) * ITEMS_PER_PAGE + i + 1}
-                </Text>
-                <Text style={styles.cell}>
-                  {new Date(e.date).toLocaleDateString("bn-BD")}
-                </Text>
-                <Text style={styles.cell}>{e.remarks || "-"}</Text>
-                <Text style={styles.cell}>{e.category || "-"}</Text>
-                <Text style={styles.cell}>{e.type || "-"}</Text>
-                <Text style={styles.cell}>{e.division || "-"}</Text>
-                <Text style={styles.cell}>{e.mode || "-"}</Text>
-                <Text style={styles.cell}>
-                  {e.type === "cash-in" ? `+ ${e.amount}` : `- ${e.amount}`}
-                </Text>
-              </View>
-            ))}
-          </View>
-        </Page>
-      </Document>
-    );
-
-    const blob = await pdf(MyDocument).toBlob();
-    saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
+    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(blob, "Transactions.xlsx");
   };
 
   return (
@@ -273,6 +521,21 @@ const TransactionListTable = ({ entries = [], refetch }) => {
           >
             {categories.map((cat, i) => (
               <option key={i}>{cat}</option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col text-sm">
+          Division:
+          <select
+            className="select-bordered select"
+            value={selectedDivision}
+            onChange={(e) => {
+              setSelectedDivision(e.target.value);
+              setPage(1);
+            }}
+          >
+            {division.map((div, i) => (
+              <option key={i}>{div}</option>
             ))}
           </select>
         </label>
@@ -312,10 +575,10 @@ const TransactionListTable = ({ entries = [], refetch }) => {
         <button className="btn-outline btn btn-sm" onClick={handleReset}>
           <FaUndo className="mr-1" /> Reset
         </button>
-        <button className="btn-outline btn btn-sm" onClick={exportToPDF}>
+        <button className="btn-outline btn btn-sm" onClick={handlePrintPreview}>
           <FaFilePdf className="mr-1" /> Export PDF
         </button>
-        <button className="btn-outline btn btn-sm" onClick={exportToExcel}>
+        <button className="btn-outline btn btn-sm" onClick={preparePreview}>
           <FaFileExcel className="mr-1 text-green-600" /> Export Excel
         </button>
       </div>
@@ -345,28 +608,32 @@ const TransactionListTable = ({ entries = [], refetch }) => {
       >
         <table className="table table-zebra w-full">
           <thead>
-            <tr className="bg-base-200 text-sm">
+            <tr className="bg-base-200 text-sm text-center">
               <th>#</th>
               <th>Date</th>
               <th>Remarks</th>
               <th>Category</th>
               <th>Type</th>
               <th>Division</th>
-              <th>Mode</th>
+              <th>Details</th>
+              <th>Pmt Mode</th>
               <th>Amount</th>
+              <th>Balance</th>
+              <th>Expenses</th> {/* NEW */}
               {isAuthenticated && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
             {paginatedEntries.map((e, i) => (
-              <tr key={i}>
+              <tr className="text-center" key={i}>
                 <td>{(page - 1) * ITEMS_PER_PAGE + i + 1}</td>
-                <td> {new Date(e.date).toLocaleDateString("bn-BD")}</td>
-                <td>{e.remarks}</td>
-                <td>{e.category}</td>
-                <td>{e.type}</td>
-                <td>{e.division}</td>
-                <td>{e.mode}</td>
+                <td>{new Date(e.date).toLocaleDateString("bn-BD")}</td>
+                <td>{e.remarks || "-"}</td>
+                <td>{e.category || "-"}</td>
+                <td>{e.type || "-"}</td>
+                <td>{e.division || "-"}</td> {/* 🔹 NEW */}
+                <td>{e.details || "-"}</td>
+                <td>{e.mode || "-"}</td>
                 <td
                   className={
                     e.type === "cash-in" ? "text-green-600" : "text-red-600"
@@ -374,6 +641,12 @@ const TransactionListTable = ({ entries = [], refetch }) => {
                 >
                   {e.type === "cash-in" ? "+" : "-"} {e.amount}
                 </td>
+                <td
+                  className={e.balance >= 0 ? "text-green-600" : "text-red-600"}
+                >
+                  {e.balance}
+                </td>
+                <td className="text-red-600">{e.expense}</td> {/* NEW */}
                 {isAuthenticated && (
                   <td>
                     <div className="flex gap-2">
@@ -395,6 +668,15 @@ const TransactionListTable = ({ entries = [], refetch }) => {
               </tr>
             ))}
           </tbody>
+          {/* 🔹 Footer for total expense */}
+          <tfoot>
+            <tr className="bg-base-200 font-bold text-sm text-center">
+              <td colSpan={9}>Total Expenses</td>
+              {/* <td>-</td> */}
+              <td className="text-red-600">{totalExpense}</td>
+              {isAuthenticated && <td></td>}
+            </tr>
+          </tfoot>
         </table>
 
         {filteredEntries.length === 0 && (
@@ -410,7 +692,51 @@ const TransactionListTable = ({ entries = [], refetch }) => {
           closeModal={() => setEditEntry(null)}
           entry={editEntry}
           onSuccess={() => setEditEntry(null)}
+          refetch={refetch}
         />
+      )}
+      {previewVisible && (
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded w-[90vw] max-h-[80vh] overflow-auto">
+            <h2 className="mb-4 font-bold text-xl">Excel Preview</h2>
+            <table className="border w-full border-collapse">
+              <thead>
+                <tr>
+                  {Object.keys(previewData[0]).map((key) => (
+                    <th key={key} className="px-2 py-1 border">
+                      {key}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {previewData.map((row, i) => (
+                  <tr key={i}>
+                    {Object.values(row).map((val, j) => (
+                      <td key={j} className="px-2 py-1 border text-center">
+                        {val}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="bg-gray-300 px-4 py-2 rounded"
+                onClick={() => setPreviewVisible(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="bg-green-500 px-4 py-2 rounded text-white"
+                onClick={downloadExcel}
+              >
+                Download Excel
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Pagination */}

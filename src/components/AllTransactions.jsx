@@ -97,8 +97,8 @@ const totalInstallmentCashIn = members.reduce(
           isModal={true}
           type="cash-out"
           closeModal={() => setModalOpen(false)}
+          refetch={refetch}
           onSuccess={() => {
-            refetch();
             setModalOpen(false);
           }}
         />
