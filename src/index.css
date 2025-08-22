@@ -1,9 +1,22 @@
-
 @import "@fortawesome/fontawesome-free/css/all.min.css";
+
 
 @import "tailwindcss";
 @plugin "daisyui";
 
+/* 1️⃣ Add custom font first */
+@font-face {
+  font-family: 'Noto Sans Bengali';
+  src: url('/fonts/NotoSansBengali-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+/* 2️⃣ Then use it */
+#pdfContent {
+  font-family: 'Noto Sans Bengali', sans-serif;
+}
+
 a.active{
-  @apply text-primary underline underline-offset-4 
+  @apply text-primary underline underline-offset-4;
 }

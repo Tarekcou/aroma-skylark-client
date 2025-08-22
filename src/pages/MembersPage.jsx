@@ -12,21 +12,83 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";   // ✅ add this
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+  pdf,
+} from "@react-pdf/renderer";
+
+const ITEMS_PER_PAGE = 10;
+
+// 🔹 Register Bangla font once
+Font.register({
+  family: "NotoSansBengali",
+  src: "/fonts/NotoSansBengali-Regular.ttf",
+});
+
+const styles = StyleSheet.create({
+  page: {
+    fontFamily: "NotoSansBengali",
+    padding: 20,
+    fontSize: 10,
+  },
+  table: {
+    display: "table",
+    width: "auto",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  row: {
+    flexDirection: "row",
+  },
+  cell: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 4,
+    flex: 1,
+  },
+  header: {
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
+    fontWeight: "bold",
+  },
+  content: {
+    fontSize: 12,
+    lineHeight: 1.5,
+  },
+  headerCell: {
+    backgroundColor: "#f0f0f0",
+    fontWeight: "bold",
+  },
+});
 
 const MembersPage = () => {
   const [modalData, setModalData] = useState(null);
   const queryClient = useQueryClient();
 
-  const { refetch, data: members = [], isLoading } = useQuery({
+  const {
+    refetch,
+    data: members = [],
+    isLoading,
+  } = useQuery({
     queryKey: ["members"],
     queryFn: async () => {
       const res = await axiosPublic.get("/members");
-      console.log(res.data.members)
+      console.log(res.data.members);
       return res.data.members || [];
     },
   });
   const [installments, setInstallments] = useState([]);
- const getInstallmentsFromMember = (member) => {
+  const getInstallmentsFromMember = (member) => {
     const keys = Object.keys(member);
     const payments = keys.filter(
       (k) => k.startsWith("payment") && k.endsWith("Amount")
@@ -54,7 +116,7 @@ const MembersPage = () => {
   };
 
   const defaultSubscription = 300000;
- // Calculate totals
+  // Calculate totals
   const calculateTotalPaid = (member) => {
     return installments.reduce((sum, i) => {
       return sum + (member[`payment${i}Amount`] || 0);
@@ -113,47 +175,89 @@ const MembersPage = () => {
   };
 
   // 📌 Download as PDF
- // 📌 Download as PDF
-const handleDownloadPDF = () => {
-  const doc = new jsPDF();
-  const today = new Date();
-  const formattedDate = today.toLocaleDateString("en-GB").replace(/\//g, "-");
+  // 📌 Download as PDF
+  // 📌 Download as PDF (React PDF Renderer)
+  const handleDownloadPDF = async () => {
+    if (!members || members.length === 0) {
+      toast.error("No members to export");
+      return;
+    }
 
-  autoTable(doc, {
-    startY: 25,
-    head: [["#", "Date", "Name", "Phone", "Subscription", "Total Paid", "Due"]],
-    body: members.map((m, i) => {
-      const totalPaid = calculateTotalPaid(m);
-      const due = calculateDue(m);
+    const today = new Date();
+    const formattedDate = today.toLocaleDateString("en-GB").replace(/\//g, "-");
 
-      return [
-        i + 1,
-        formattedDate,
-        m.name,
-        m.phone,
-        m.subscription,
-        totalPaid || 0,
-        due,
-      ];
-    }),
-    styles: {
-      lineWidth: 0.2, // Border thickness
-      lineColor: [0, 0, 0], // Black border
-    },
-    headStyles: {
-      fillColor: [220, 220, 220], // Light gray background for header
-      textColor: [0, 0, 0],
-      lineWidth: 0.3,
-      lineColor: [0, 0, 0],
-    },
-    tableLineWidth: 0.2,
-    tableLineColor: [0, 0, 0],
-  });
+    // Table headers
+    const headers = [
+      "#",
+      "Date",
+      "Name",
+      "Phone",
+      "Subscription",
+      "Total Paid",
+      "Due",
+    ];
+    const colWidth = `${100 / headers.length}%`;
 
-  doc.save(`members_${formattedDate}.pdf`);
-};
+    const MyDocument = (
+      <Document>
+        <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Title + Date */}
+          <Text style={styles.header}>Members Report</Text>
+          <Text style={styles.subHeader}>Date: {formattedDate}</Text>
 
+          {/* Table */}
+          <View style={styles.table}>
+            {/* Header Row */}
+            <View style={styles.row}>
+              {headers.map((h, i) => (
+                <Text
+                  key={i}
+                  style={[styles.cell, styles.headerCell, { width: colWidth }]}
+                >
+                  {h}
+                </Text>
+              ))}
+            </View>
 
+            {/* Body Rows */}
+            {members.map((m, idx) => {
+              const totalPaid = calculateTotalPaid(m);
+              const due = calculateDue(m);
+
+              return (
+                <View key={idx} style={styles.row}>
+                  <Text style={[styles.cell, { width: colWidth }]}>
+                    {idx + 1}
+                  </Text>
+                  <Text style={[styles.cell, { width: colWidth }]}>
+                    {formattedDate}
+                  </Text>
+                  <Text style={[styles.cell, { width: colWidth }]}>
+                    {m.name}
+                  </Text>
+                  <Text style={[styles.cell, { width: colWidth }]}>
+                    {m.phone}
+                  </Text>
+                  <Text style={[styles.cell, { width: colWidth }]}>
+                    {m.subscription || 0}
+                  </Text>
+                  <Text style={[styles.cell, { width: colWidth }]}>
+                    {totalPaid || 0}
+                  </Text>
+                  <Text style={[styles.cell, { width: colWidth }]}>
+                    {due || 0}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </Page>
+      </Document>
+    );
+
+    const blob = await pdf(MyDocument).toBlob();
+    saveAs(blob, `members_${formattedDate}.pdf`);
+  };
 
   return (
     <div className="space-y-4">
@@ -162,13 +266,13 @@ const handleDownloadPDF = () => {
         <div className="flex gap-2">
           <button
             onClick={handleDownloadPDF}
-            className="btn btn-outline btn-sm"
+            className="btn-outline btn btn-sm"
           >
-            <FaFilePdf  className="text-red-600"/> PDF
+            <FaFilePdf className="text-red-600" /> PDF
           </button>
           <button
             onClick={handleDownloadExcel}
-            className="btn btn-outline btn-sm"
+            className="btn-outline btn btn-sm"
           >
             <FaFileExcel /> Excel
           </button>
@@ -189,41 +293,42 @@ const handleDownloadPDF = () => {
               <th>Name</th>
               <th>Phone</th>
               <th>Subscription</th>
-               <th>Total Pmt</th>
+              <th>Total Pmt</th>
               <th>Ind. Due</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {members.map((m, i) => {
-                const totalPaid = calculateTotalPaid(m);
-                  const due = calculateDue(m);
-                  return  <tr key={m._id}>
+              const totalPaid = calculateTotalPaid(m);
+              const due = calculateDue(m);
+              return (
+                <tr key={m._id}>
                   <td>{i + 1}</td>
                   <td>{m.name}</td>
                   <td>{m.phone}</td>
                   <td>{m.subscription}</td>
-                    <td className="font-semibold text-green-600">{totalPaid || 0}</td>
-                    <td className="font-semibold text-red-600">{due}</td>
+                  <td className="font-semibold text-green-600">
+                    {totalPaid || 0}
+                  </td>
+                  <td className="font-semibold text-red-600">{due}</td>
                   <td>
-                  <button
-                    className="btn-outline btn btn-sm"
-                    onClick={() => setModalData(m)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className="ml-2 btn btn-error btn-sm"
-                    onClick={() => handleDelete(m._id)}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            }
-            
-              
-            )}
+                    <button
+                      className="btn-outline btn btn-sm"
+                      onClick={() => setModalData(m)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="ml-2 btn btn-error btn-sm"
+                      onClick={() => handleDelete(m._id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

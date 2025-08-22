@@ -1,7 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FaSearch, FaUndo, FaFilePdf } from "react-icons/fa";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { FaSearch, FaUndo, FaFilePdf, FaFileExcel } from "react-icons/fa";
 import TransactionFormModal from "./TransactionFormModal";
 import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
@@ -9,44 +7,123 @@ import Swal from "sweetalert2";
 import { useAuth } from "../context/AuthContext";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import { FaFileExcel } from "react-icons/fa";
+
+// 🚨 Removed pdfMake import
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+  pdf,
+} from "@react-pdf/renderer";
 
 const ITEMS_PER_PAGE = 10;
 
-const TransactionListTable = ({ entries = [] , refetch}) => {
+// 🔹 Register Bangla font once
+Font.register({
+  family: "NotoSansBengali",
+  src: "/fonts/NotoSansBengali-Regular.ttf",
+});
+
+const styles = StyleSheet.create({
+  page: {
+    fontFamily: "NotoSansBengali",
+    padding: 20,
+    fontSize: 10,
+  },
+  table: {
+    display: "table",
+    width: "auto",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  row: {
+    flexDirection: "row",
+  },
+  cell: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 4,
+    flex: 1,
+  },
+  header: {
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
+    fontWeight: "bold",
+  },
+  content: {
+    fontSize: 12,
+    lineHeight: 1.5,
+  },
+  headerCell: {
+    backgroundColor: "#f0f0f0",
+    fontWeight: "bold",
+  },
+});
+
+const TransactionListTable = ({ entries = [], refetch }) => {
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedType, setSelectedType] = useState("All");
+  const [selectedMode, setSelectedMode] = useState("All");
   const [selectedDate, setSelectedDate] = useState("");
   const [page, setPage] = useState(1);
   const [editEntry, setEditEntry] = useState(null);
-  const { login, isAuthenticated } = useAuth();
-  console.log(entries)
+  const { isAuthenticated } = useAuth();
+
+  // 🔹 Unique filter options
   const categories = useMemo(
     () => ["All", ...new Set(entries.map((e) => e.category).filter(Boolean))],
     [entries]
   );
-
-  const filteredEntries = useMemo(
-    () =>
-      entries.filter((entry) => {
-        const matchSearch =
-          !searchText ||
-          entry.remarks?.toLowerCase().includes(searchText.toLowerCase()) ||
-          entry.amount?.toString().includes(searchText) ||
-          entry.extraField?.toLowerCase().includes(searchText.toLowerCase()); // ✅ added extraField search
-
-        const matchCategory =
-          selectedCategory === "All" || entry.category === selectedCategory;
-
-        const matchDate =
-          !selectedDate ||
-          new Date(entry.date).toISOString().slice(0, 10) === selectedDate;
-
-        return matchSearch && matchCategory && matchDate;
-      }),
-    [entries, searchText, selectedCategory, selectedDate]
+  const types = useMemo(
+    () => ["All", ...new Set(entries.map((e) => e.extraField).filter(Boolean))],
+    [entries]
+  );
+  const modes = useMemo(
+    () => ["All", ...new Set(entries.map((e) => e.mode).filter(Boolean))],
+    [entries]
   );
 
+  // 🔹 Filtering logic
+  const filteredEntries = useMemo(() => {
+    return entries.filter((entry) => {
+      const matchSearch =
+        !searchText ||
+        entry.remarks?.toLowerCase().includes(searchText.toLowerCase()) ||
+        entry.amount?.toString().includes(searchText) ||
+        entry.extraField?.toLowerCase().includes(searchText.toLowerCase()) ||
+        entry.category?.toLowerCase().includes(searchText.toLowerCase()) ||
+        entry.mode?.toLowerCase().includes(searchText.toLowerCase());
+
+      const matchCategory =
+        selectedCategory === "All" || entry.category === selectedCategory;
+      const matchType =
+        selectedType === "All" || entry.extraField === selectedType;
+      const matchMode = selectedMode === "All" || entry.mode === selectedMode;
+      const matchDate =
+        !selectedDate ||
+        new Date(entry.date).toISOString().slice(0, 10) === selectedDate;
+
+      return (
+        matchSearch && matchCategory && matchType && matchMode && matchDate
+      );
+    });
+  }, [
+    entries,
+    searchText,
+    selectedCategory,
+    selectedType,
+    selectedMode,
+    selectedDate,
+  ]);
 
   const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE);
   const paginatedEntries = filteredEntries.slice(
@@ -54,13 +131,17 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
     page * ITEMS_PER_PAGE
   );
 
+  // 🔹 Reset filters
   const handleReset = () => {
     setSearchText("");
     setSelectedCategory("All");
+    setSelectedType("All");
+    setSelectedMode("All");
     setSelectedDate("");
     setPage(1);
   };
 
+  // 🔹 Delete handler
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Are you sure?",
@@ -77,75 +158,89 @@ const TransactionListTable = ({ entries = [] , refetch}) => {
     try {
       await axiosPublic.delete(`/entries/${id}`);
       toast.success("Entry deleted");
-
-      // Trigger refetch to refresh the data
       if (refetch) refetch();
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete entry");
     }
   };
-const exportToExcel = () => {
-  const worksheetData = filteredEntries.map((e, i) => ({
-    "#": i + 1,
-    Date: new Date(e.date).toLocaleString(),
-    Remarks: e.remarks || "-",
-    Category: e.category || "-",
-    Type: e.extraField || "-",
-    Mode: e.mode || "-",
-    Amount: `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
-  }));
 
-  const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
+  // 🔹 Export Excel (unchanged)
+  const exportToExcel = () => {
+    const worksheetData = filteredEntries.map((e, i) => ({
+      "#": i + 1,
+      Date: new Date(e.date).toLocaleString("bn-BD"),
+      Remarks: e.remarks || "-",
+      Category: e.category || "-",
+      Type: e.extraField || "-",
+      Mode: e.mode || "-",
+      Amount: `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
+    }));
 
-  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
-  const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-  saveAs(data, "transactions.xlsx");
-};
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
 
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
 
+    const data = new Blob([excelBuffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+    });
+    saveAs(data, "transactions.xlsx");
+  };
 
-const exportToPDF = () => {
-  const doc = new jsPDF();
+  // 🔹 Export PDF with @react-pdf/renderer
+  const exportToPDF = async () => {
+    const MyDocument = (
+      <Document>
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.header}> Transactions </Text>
 
-  // Title
-  doc.setFontSize(14);
-  doc.text("Transaction List", 14, 16);
+          <View style={styles.table}>
+            {/* Header */}
+            <View style={styles.row}>
+              {[
+                "#",
+                "তারিখ",
+                "Remarks",
+                "Category",
+                "Type",
+                "Mode",
+                "Amount",
+              ].map((h, i) => (
+                <Text key={i} style={[styles.cell, styles.headerCell]}>
+                  {h}
+                </Text>
+              ))}
+            </View>
+            {/* Rows */}
+            {paginatedEntries.map((e, i) => (
+              <View key={i} style={styles.row}>
+                <Text style={styles.cell}>
+                  {(page - 1) * ITEMS_PER_PAGE + i + 1}
+                </Text>
+                <Text style={styles.cell}>
+                  {new Date(e.date).toLocaleString("bn-BD")}
+                </Text>
+                <Text style={styles.cell}>{e.remarks || "-"}</Text>
+                <Text style={styles.cell}>{e.category || "-"}</Text>
+                <Text style={styles.cell}>{e.extraField || "-"}</Text>
+                <Text style={styles.cell}>{e.mode || "-"}</Text>
+                <Text style={styles.cell}>
+                  {e.type === "cash-in" ? `+ ${e.amount}` : `- ${e.amount}`}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </Page>
+      </Document>
+    );
 
-  // Add Table with Borders
- autoTable(doc, {
-  startY: 20,
-  head: [["#", "Date", "Remarks", "Category","Type", "Mode", "Amount"]],
-  body: filteredEntries.map((e, i) => [
-    i + 1,
-    new Date(e.date).toLocaleString(),
-    e.remarks || "-",
-    e.category || "-",
-    e.extraField || "-",
-    e.mode || "-",
-    `${e.type === "cash-in" ? "+" : "-"} ${e.amount}`,
-  ]),
-  headStyles: { 
-    fillColor: [220, 220, 220], // Darker gray background
-    textColor: [0, 0, 0],       // Solid black text
-    fontStyle: "bold"           // Bold text for better readability
-  },
-  styles: { 
-    lineColor: [0, 0, 0], 
-    lineWidth: 0.1 
-  }
-});
-
-
-  // Generate Date String for Filename
-  const today = new Date();
-  const dateStr = today.toISOString().split("T")[0]; // e.g. 2025-08-19
-
-  // Save with date
-  doc.save(`transactions_${dateStr}.pdf`);
-};
-
+    const blob = await pdf(MyDocument).toBlob();
+    saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
+  };
 
   return (
     <div className="space-y-6">
@@ -163,6 +258,7 @@ const exportToPDF = () => {
             }}
           />
         </label>
+
         <label className="flex flex-col text-sm">
           Category:
           <select
@@ -178,11 +274,44 @@ const exportToPDF = () => {
             ))}
           </select>
         </label>
+
+        <label className="flex flex-col text-sm">
+          Type:
+          <select
+            className="select-bordered select"
+            value={selectedType}
+            onChange={(e) => {
+              setSelectedType(e.target.value);
+              setPage(1);
+            }}
+          >
+            {types.map((t, i) => (
+              <option key={i}>{t}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="flex flex-col text-sm">
+          Mode:
+          <select
+            className="select-bordered select"
+            value={selectedMode}
+            onChange={(e) => {
+              setSelectedMode(e.target.value);
+              setPage(1);
+            }}
+          >
+            {modes.map((m, i) => (
+              <option key={i}>{m}</option>
+            ))}
+          </select>
+        </label>
+
         <button className="btn-outline btn btn-sm" onClick={handleReset}>
           <FaUndo className="mr-1" /> Reset
         </button>
         <button className="btn-outline btn btn-sm" onClick={exportToPDF}>
-          <FaFilePdf className="mr-1" />  Export PDF
+          <FaFilePdf className="mr-1" /> Export PDF
         </button>
         <button className="btn-outline btn btn-sm" onClick={exportToExcel}>
           <FaFileExcel className="mr-1 text-green-600" /> Export Excel
@@ -194,7 +323,7 @@ const exportToPDF = () => {
         <input
           type="text"
           className="input-bordered w-full max-w-sm input"
-          placeholder="Search by remark or amount..."
+          placeholder="Search by remark, amount, type, category, mode..."
           value={searchText}
           onChange={(e) => {
             setSearchText(e.target.value);
@@ -207,7 +336,11 @@ const exportToPDF = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white shadow rounded-lg overflow-x-auto">
+      <div
+        id="pdfContent"
+        style={{ fontFamily: "'Noto Sans Bengali', sans-serif" }}
+        className="bg-white shadow rounded-lg overflow-x-auto"
+      >
         <table className="table table-zebra w-full">
           <thead>
             <tr className="bg-base-200 text-sm">
@@ -217,7 +350,6 @@ const exportToPDF = () => {
               <th>Category</th>
               <th>Type</th>
               <th>Mode</th>
-              {/* <th>Bill</th> */}
               <th>Amount</th>
               {isAuthenticated && <th>Actions</th>}
             </tr>
@@ -226,12 +358,11 @@ const exportToPDF = () => {
             {paginatedEntries.map((e, i) => (
               <tr key={i}>
                 <td>{(page - 1) * ITEMS_PER_PAGE + i + 1}</td>
-                <td>{new Date(e.date).toLocaleString()}</td>
+                <td>{new Date(e.date).toLocaleString("bn-BD")}</td>
                 <td>{e.remarks}</td>
                 <td>{e.category}</td>
                 <td>{e.extraField}</td>
                 <td>{e.mode}</td>
-                {/* <td>{e.billNo || "-"}</td> */}
                 <td
                   className={
                     e.type === "cash-in" ? "text-green-600" : "text-red-600"
@@ -267,15 +398,14 @@ const exportToPDF = () => {
         )}
       </div>
 
+      {/* Edit Modal */}
       {editEntry && (
         <TransactionFormModal
           isModal={true}
           entries={entries}
           closeModal={() => setEditEntry(null)}
           entry={editEntry}
-          onSuccess={() => {
-            setEditEntry(null);
-          }}
+          onSuccess={() => setEditEntry(null)}
         />
       )}
 

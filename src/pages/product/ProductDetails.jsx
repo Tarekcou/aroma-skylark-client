@@ -11,11 +11,69 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";// <- default import
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+  pdf,
+} from "@react-pdf/renderer";
+
+const ITEMS_PER_PAGE = 10;
+
+// 🔹 Register Bangla font once
+Font.register({
+  family: "NotoSansBengali",
+  src: "/fonts/NotoSansBengali-Regular.ttf",
+});
+
+const styles = StyleSheet.create({
+  page: {
+    fontFamily: "NotoSansBengali",
+    padding: 20,
+    fontSize: 10,
+  },
+  table: {
+    display: "table",
+    width: "auto",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  row: {
+    flexDirection: "row",
+  },
+  cell: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 4,
+    flex: 1,
+  },
+  header: {
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 20,
+    fontWeight: "bold",
+  },
+  content: {
+    fontSize: 12,
+    lineHeight: 1.5,
+  },
+  headerCell: {
+    backgroundColor: "#f0f0f0",
+    fontWeight: "bold",
+  },
+});
 
 const ProductDetails = () => {
   const { id } = useParams();
   const qc = useQueryClient();
-  const navigate=useNavigate()
+  const navigate = useNavigate();
   const [range, setRange] = useState({ from: "", to: "" });
   const [form, setForm] = useState({
     type: "in",
@@ -98,24 +156,50 @@ const ProductDetails = () => {
       date: log.date ? new Date(log.date).toISOString().slice(0, 10) : "",
     });
   };
-  const exportPDF = (logs, productName) => {
-    const doc = new jsPDF();
+  // Inside ProductDetails.jsx
 
-    doc.text(`${productName} - Stock Logs`, 14, 20);
+  const PDFDocument = ({ logs, productName }) => (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.header}>{productName} - Stock Logs</Text>
 
-    autoTable(doc, {
-      head: [["Date","Type", "Quantity", "Remarks","Stock", ]],
-      body: logs.map((log) => [log.date,log.type, log.quantity, log.remarks,log.balance]),
-      startY: 30,
-    });
+        {/* Table Header */}
+        <View style={[styles.table, { marginBottom: 5 }]}>
+          <View style={styles.row}>
+            {["তারিখ", "Type", "Quantity", "Remarks", "Stock"].map((header) => (
+              <Text key={header} style={[styles.cell, styles.headerCell]}>
+                {header}
+              </Text>
+            ))}
+          </View>
 
-    doc.save(`${productName}-stock-logs.pdf`);
+          {/* Table Rows */}
+          {logs.map((log, idx) => (
+            <View key={idx} style={styles.row}>
+              <Text style={styles.cell}>{log.date}</Text>
+              <Text style={styles.cell}>{log.type}</Text>
+              <Text style={styles.cell}>{log.quantity}</Text>
+              <Text style={styles.cell}>{log.remarks}</Text>
+              <Text style={styles.cell}>{log.balance}</Text>
+            </View>
+          ))}
+        </View>
+      </Page>
+    </Document>
+  );
+
+  // Export function using react-pdf
+  const exportPDF = async (logs, productName) => {
+    const doc = <PDFDocument logs={logs} productName={productName} />;
+    const asPdf = pdf(doc); // pdf() returns a blob-like object
+    const blob = await asPdf.toBlob();
+    saveAs(blob, `${productName}-stock-logs.pdf`);
   };
 
   const exportExcel = (logs, productName) => {
     const worksheet = XLSX.utils.json_to_sheet(
       logs.map((log) => ({
-        Date:log.date,
+        Date: log.date,
         Type: log.type,
         Quantity: log.quantity,
         Remarks: log.remarks,

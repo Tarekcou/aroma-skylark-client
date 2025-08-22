@@ -2,15 +2,18 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "react-router";
 import axiosPublic from "../../axios/AxiosPublic";
-import { MdAdd, MdDelete, MdDetails } from "react-icons/md";
+import { MdAdd, MdDelete, MdDetails, MdEdit } from "react-icons/md";
 import AddProductModal from "./AddProductModal";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
 import { TbListDetails } from "react-icons/tb";
+import EditProductModal from "./EditProductModal";
 
 const ProductList = () => {
   const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const navigate=useNavigate()
                const qc = useQueryClient();
         
@@ -103,8 +106,18 @@ const ProductList = () => {
                     to={`/dashboard/products/${p._id}`}
                     className="text-xs btn-accent btn btn-sm"
                   >
-                    <TbListDetails className="text-lg"/>
+                    <TbListDetails className="text-lg" />
                   </Link>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingProduct(p);
+                      setEditOpen(true);
+                    }}
+                    className="text-white btn btn-warning btn-sm"
+                  >
+                    <MdEdit className="text-xl" />
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation(); // prevent parent click
@@ -135,6 +148,14 @@ const ProductList = () => {
           closeModal={() => setAddOpen(false)}
         />
       )}
+      {editOpen && (
+        <EditProductModal
+          isOpen={editOpen}
+          closeModal={() => setEditOpen(false)}
+          product={editingProduct}
+        />
+      )}
+
       <button
         onClick={() => setAddOpen(true)}
         className="md:hidden bottom-6 left-1/2 fixed -translate-x-1/2 btn btn-primary btn-sm"

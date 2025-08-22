@@ -1,15 +1,74 @@
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axiosPublic from "../axios/AxiosPublic";
-import toast from "react-hot-toast";
 import InstallmentEditModal from "./InstallmentEditModal";
 import { MdAdd } from "react-icons/md";
-import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
-import { TbPdf } from "react-icons/tb";
+
+import {
+  pdf,
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  Font,
+} from "@react-pdf/renderer";
+import { saveAs } from "file-saver";
+import toast from "react-hot-toast";
+
+// 🔹 Register Bangla/English font (if needed)
+Font.register({
+  family: "NotoSans",
+  src: "/fonts/NotoSansBengali-Regular.ttf",
+});
+
+const styles = StyleSheet.create({
+  page: {
+    padding: 20,
+    fontSize: 10,
+    fontFamily: "NotoSans",
+  },
+  header: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 10,
+    fontWeight: "bold",
+  },
+  subHeader: {
+    fontSize: 10,
+    textAlign: "right",
+    marginBottom: 15,
+  },
+  table: {
+    display: "table",
+    width: "auto",
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderBottomWidth: 0,
+  },
+  row: {
+    flexDirection: "row",
+  },
+  cell: {
+    borderStyle: "solid",
+    borderWidth: 1,
+    borderLeftWidth: 0,
+    borderTopWidth: 0,
+    padding: 4,
+    fontSize: 8,
+    textAlign: "center",
+    flexGrow: 1,
+  },
+  headCell: {
+    fontWeight: "bold",
+    backgroundColor: "#2980b9",
+    color: "white",
+  },
+});
 
 const Installment = () => {
   const [editMember, setEditMember] = useState(null);
@@ -101,80 +160,119 @@ const Installment = () => {
   };
 
   // 📌 Download PDF
-const handleDownloadPDF = () => {
-  if (members.length === 0) {
-    toast.error("No members to export");
-    return;
-  }
+  // 📌 Download PDF
+  const handleDownloadPDF = async () => {
+    if (!members || members.length === 0) {
+      toast.error("No members to export");
+      return;
+    }
 
-  const doc = new jsPDF("l", "pt", "a4"); // landscape for wide tables
+    const today = new Date();
+    const dateStr = today.toLocaleDateString("en-GB"); // dd/mm/yyyy
 
-  // 🔹 Add title and date
-  const today = new Date();
-  const dateStr = today.toLocaleDateString("en-GB"); // dd/mm/yyyy
-  doc.text("Installment Collection", 40, 30);
-  doc.text(`Date: ${dateStr}`, doc.internal.pageSize.getWidth() - 100, 30);
-
-  // 🔹 Table headers
-  const head = [
-    [
+    // Dynamic headers
+    const headers = [
       "SL",
       "Flat Owner",
       "Subscription",
-      ...installments.flatMap((i) => [`${i}-Date`, `${i}-Amount`]),
+      ...installments.flatMap((i) => [`${i} - Date`, `${i} - Amount`]),
       "Total Paid",
       "Ind. Due",
-    ],
-  ];
+    ];
 
-  // 🔹 Table body
-  const body = members.map((member, idx) => [
-    idx + 1,
-    member.name,
-    defaultSubscription,
-    ...installments.flatMap((i) => [
-      member[`payment${i}Date`] || "-",
-      member[`payment${i}Amount`] || 0,
-    ]),
-    calculateTotalPaid(member),
-    calculateDue(member),
-  ]);
+    // ✅ Equal column width (%)
+    const colWidth = `${100 / headers.length}%`;
 
-  // 🔹 AutoTable with borders
-  autoTable(doc, {
-    head,
-    body,
-    startY: 50,
-    styles: { 
-      fontSize: 8, 
-      cellPadding: 3, 
-      lineWidth: 0.5,       // border thickness
-      lineColor: [0, 0, 0], // black border
-    },
-    headStyles: { fillColor: [41, 128, 185] },
-  });
+    const MyDocument = (
+      <Document>
+        <Page size="A4" orientation="landscape" style={styles.page}>
+          {/* Title + Date */}
+          <Text style={styles.header}>Installment Collection Report</Text>
+          <Text style={styles.subHeader}>Date: {dateStr}</Text>
 
-  // 🔹 Save with date in filename
-  const fileName = `installments_${today.toISOString().split("T")[0]}.pdf`; // YYYY-MM-DD
-  doc.save(fileName);
-};
+          {/* Table */}
+          <View style={styles.table}>
+            {/* Header Row */}
+            <View style={styles.row}>
+              {headers.map((h, i) => (
+                <Text
+                  key={i}
+                  style={[styles.cell, styles.headCell, { width: colWidth }]}
+                >
+                  {h}
+                </Text>
+              ))}
+            </View>
 
+            {/* Body Rows */}
+            {members.map((member, idx) => (
+              <View key={idx} style={styles.row}>
+                <Text style={[styles.cell, { width: colWidth }]}>
+                  {idx + 1}
+                </Text>
+                <Text style={[styles.cell, { width: colWidth }]}>
+                  {member.name}
+                </Text>
+                <Text style={[styles.cell, { width: colWidth }]}>
+                  {defaultSubscription}
+                </Text>
+
+                {installments.flatMap((i, k) => [
+                  <Text
+                    key={`${idx}-d-${k}`}
+                    style={[styles.cell, { width: colWidth }]}
+                  >
+                    {member[`payment${i}Date`] || "-"}
+                  </Text>,
+                  <Text
+                    key={`${idx}-a-${k}`}
+                    style={[styles.cell, { width: colWidth }]}
+                  >
+                    {member[`payment${i}Amount`] || 0}
+                  </Text>,
+                ])}
+
+                <Text style={[styles.cell, { width: colWidth }]}>
+                  {calculateTotalPaid(member)}
+                </Text>
+                <Text style={[styles.cell, { width: colWidth }]}>
+                  {calculateDue(member)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </Page>
+      </Document>
+    );
+
+    const blob = await pdf(MyDocument).toBlob();
+    const fileName = `installments_${today.toISOString().split("T")[0]}.pdf`; // YYYY-MM-DD
+    saveAs(blob, fileName);
+  };
 
   return (
     <div className="relative space-y-4">
       <div className="flex md:flex-row flex-col justify-between items-center gap-5">
-        <h2 className="font-bold text-xl">💰 Construction Installment Collection</h2>
+        <h2 className="font-bold text-xl">
+          💰 Construction Installment Collection
+        </h2>
         <div className="flex gap-2">
-          <button onClick={handleDownloadPDF} className="btn btn-sm btn-outline">
-            <FaFilePdf  className="text-red-600"/> PDF
+          <button
+            onClick={handleDownloadPDF}
+            className="btn-outline btn btn-sm"
+          >
+            <FaFilePdf className="text-red-600" /> PDF
           </button>
           <button
             onClick={handleDownloadExcel}
-            className="btn btn-sm btn-outline"
+            className="btn-outline btn btn-sm"
           >
             <FaFileExcel /> Excel
           </button>
-          <button onClick={handleAddInstallment} className="btn btn-sm btn-info">
+          <button
+            onClick={handleAddInstallment}
+            className="btn btn-sm btn-info"
+          >
             + Add Installment Column
           </button>
         </div>
@@ -200,8 +298,8 @@ const handleDownloadPDF = () => {
           </thead>
           <tbody>
             {members.map((member, idx) => {
-                const totalPaid = calculateTotalPaid(member);
-                const due = calculateDue(member);
+              const totalPaid = calculateTotalPaid(member);
+              const due = calculateDue(member);
 
               return (
                 <tr key={member._id}>
@@ -214,7 +312,9 @@ const handleDownloadPDF = () => {
                       <td>{member[`payment${i}Amount`] || 0}</td>
                     </React.Fragment>
                   ))}
-                  <td className="font-semibold text-green-600">{totalPaid || 0}</td>
+                  <td className="font-semibold text-green-600">
+                    {totalPaid || 0}
+                  </td>
                   <td className="font-semibold text-red-600">{due}</td>
                   <td>
                     <button
