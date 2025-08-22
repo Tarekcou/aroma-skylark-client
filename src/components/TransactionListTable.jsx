@@ -17,6 +17,7 @@ import {
   StyleSheet,
   Font,
   pdf,
+  PDFViewer,
 } from "@react-pdf/renderer";
 import { useQuery } from "@tanstack/react-query";
 
@@ -148,6 +149,7 @@ const [previewDoc, setPreviewDoc] = useState(null);
     selectedDate,
     selectedDivision,
   ]);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
 
   const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE);
 
@@ -226,215 +228,80 @@ const [previewDoc, setPreviewDoc] = useState(null);
   );
 
   // 🔹 Export PDF with @react-pdf/renderer
-//  const exportToPDF = async () => {
-//    const today = new Date();
-//    const dateStr = today.toLocaleDateString("en-GB"); // dd/mm/yyyy
 
-//    // Calculate total expense
-//    const totalExpense = paginatedEntries.reduce(
-//      (sum, e) => sum + Number(e.expense || 0),
-//      0
-//    );
+ // 🔹 PDF Doc
+ const MyPDFDoc = (
+   <Document>
+     <Page size="A4" orientation="landscape" style={styles.page}>
+       <Text style={styles.header}>All Transactions</Text>
+       <Text>Date: {new Date().toLocaleDateString("en-GB")}</Text>
 
-//    const MyDocument = (
-//      <Document>
-//        <Page size="A4" style={styles.page}>
-//          <Text style={styles.header}>All Transactions</Text>
-//          <Text style={styles.subHeader}>Date: {dateStr}</Text>
+       <View style={styles.table}>
+         {/* Header Row */}
+         <View style={styles.row}>
+           {[
+             "#",
+             "Date",
+             "Remarks",
+             "Category",
+             "Type",
+             "Division",
+             "Details",
+             "Pmt Mode",
+             "Amount",
+             "Expenses",
+           ].map((h, i) => (
+             <Text key={i} style={[styles.cell, styles.headerCell]}>
+               {h}
+             </Text>
+           ))}
+         </View>
 
-//          <View style={styles.table}>
-//            {/* Header */}
-//            <View style={styles.row}>
-//              {[
-//                "#",
-//                "Date",
-//                "Remarks",
-//                "Category",
-//                "Type",
-//                "Division",
-//                "Pmt Mode",
-//                "Amount",
-//                "Balance",
-//                "Expenses",
-//              ].map((h, i) => (
-//                <Text key={i} style={[styles.cell, styles.headerCell]}>
-//                  {h}
-//                </Text>
-//              ))}
-//            </View>
+         {/* Body Rows */}
+         {paginatedEntries.map((e, i) => (
+           <View key={i} style={styles.row}>
+             <Text style={styles.cell}>
+               {(page - 1) * ITEMS_PER_PAGE + i + 1}
+             </Text>
+             <Text style={styles.cell}>
+               {new Date(e.date).toLocaleDateString("bn-BD")}
+             </Text>
+             <Text style={styles.cell}>{e.remarks || "-"}</Text>
+             <Text style={styles.cell}>{e.category || "-"}</Text>
+             <Text style={styles.cell}>{e.type || "-"}</Text>
+             <Text style={styles.cell}>{e.division || "-"}</Text>
+             <Text style={styles.cell}>{e.details || "-"}</Text>
+             <Text style={styles.cell}>{e.mode || "-"}</Text>
+             <Text style={styles.cell}>{e.amount || "-"}</Text>
+             <Text style={styles.cell}>{e.expense || "-"}</Text>
+           </View>
+         ))}
 
-//            {/* Rows */}
-//            {paginatedEntries.map((e, i) => (
-//              <View key={i} style={styles.row}>
-//                <Text style={styles.cell}>
-//                  {(page - 1) * ITEMS_PER_PAGE + i + 1}
-//                </Text>
-//                <Text style={styles.cell}>
-//                  {new Date(e.date).toLocaleDateString("bn-BD")}
-//                </Text>
-//                <Text style={styles.cell}>{e.remarks || "-"}</Text>
-//                <Text style={styles.cell}>{e.category || "-"}</Text>
-//                <Text style={styles.cell}>{e.type || "-"}</Text>
-//                <Text style={styles.cell}>{e.division || "-"}</Text>
-//                <Text style={styles.cell}>{e.mode || "-"}</Text>
-//                <Text style={styles.cell}>{e.amount || "-"}</Text>
-//                <Text style={styles.cell}>{e.balance || "-"}</Text>
-//                <Text style={styles.cell}>{e.expense || "-"}</Text>
-//              </View>
-//            ))}
+         {/* Footer */}
+         <View style={styles.row}>
+           <Text style={styles.cell}></Text>
+           <Text style={styles.cell}></Text>
+           <Text style={styles.cell}></Text>
+           <Text style={styles.cell}></Text>
+           <Text style={styles.cell}></Text>
+           <Text style={styles.cell}></Text>
+           <Text style={styles.cell}>Total Expense</Text>
+           <Text style={styles.cell}></Text>
+           <Text style={styles.cell}></Text>
+           <Text style={styles.cell}>{totalExpense}</Text>
+         </View>
+       </View>
+     </Page>
+   </Document>
+ );
 
-//            {/* Total Expense Row */}
-//            <View style={styles.row}>
-//              <Text style={styles.cell}></Text>
-//              <Text style={styles.cell}></Text>
-//              <Text style={styles.cell}></Text>
-//              <Text style={styles.cell}></Text>
-//              <Text style={styles.cell}></Text>
-//              <Text style={styles.cell}></Text>
-//              <Text style={styles.cell}>Total Expense</Text>
-//              <Text style={styles.cell}></Text>
-//              <Text style={styles.cell}></Text>
-//              <Text style={styles.cell}>{totalExpense}</Text>
-//            </View>
-//          </View>
-//        </Page>
-//      </Document>
-//    );
-
-//    const blob = await pdf(MyDocument).toBlob();
-//    saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
-//  };
-const handlePrintPreview = () => {
-  if (!paginatedEntries || paginatedEntries.length === 0) {
-    toast.error("No entries to print");
-    return;
-  }
-
-  const totalExpense = paginatedEntries.reduce(
-    (sum, e) => sum + Number(e.expense || 0),
-    0
-  );
-
-  // Build HTML table for print
-  const tableRows = paginatedEntries
-    .map(
-      (e, i) => `
-      <tr>
-        <td>${(page - 1) * ITEMS_PER_PAGE + i + 1}</td>
-        <td>${new Date(e.date).toLocaleDateString("bn-BD")}</td>
-        <td>${e.remarks || "-"}</td>
-        <td>${e.category || "-"}</td>
-        <td>${e.type || "-"}</td>
-        <td>${e.division || "-"}</td>
-                <td>${e.details || "-"}</td>
-
-        <td>${e.mode || "-"}</td>
-        <td>${e.amount || "-"}</td>
-        <td>${e.expense || "-"}</td>
-      </tr>
-    `
-    )
-    .join("");
-
-  const html = `
-    <html>
-      <head>
-        <title>All Transactions</title>
-        <style>
-          table { width: 100%; border-collapse: collapse; }
-          th, td { border: 1px solid #000; padding: 5px; text-align: center; }
-          th { background-color: #f0f0f0; }
-        </style>
-      </head>
-      <body>
-        <h2>All Transactions</h2>
-        <p>Date: ${new Date().toLocaleDateString("en-GB")}</p>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Date</th>
-              <th>Remarks</th>
-              <th>Category</th>
-              <th>Type</th>
-              <th>Division</th>
-                <th>Details</th>
-
-              <th>Pmt Mode</th>
-              <th>Amount</th>
-              <th>Expenses</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${tableRows}
-            <tr>
-              <td colspan="7"></td>
-              <td><b>Total Expense</b></td>
-              <td colspan="2">${totalExpense}</td>
-            </tr>
-          </tbody>
-        </table>
-      </body>
-    </html>
-  `;
-
-  // Open new window and trigger print
-  const printWindow = window.open("", "");
-  printWindow.document.write(html);
-  printWindow.document.close();
-  printWindow.focus();
-  printWindow.print();
-};
+ // 🔹 Download
+ const handleDownloadPDF = async () => {
+   const blob = await pdf(MyPDFDoc).toBlob();
+   saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
+ };
 
 
- 
-
-  // const exportToExcel = () => {
-  //   const worksheetData = paginatedEntries.map((e, i) => ({
-  //     "#": i + 1,
-  //     Date: new Date(e.date).toLocaleString("bn-BD"),
-  //     Remarks: e.remarks || "-",
-  //     Category: e.category || "-",
-  //     Type: e.type || "-",
-  //     PaymentMode: e.mode || "-",
-  //     Amount: e.amount || "-",
-  //     Balance: e.balance || "-",
-  //     Expenses: e.expense || "-",
-  //   }));
-
-  //   // Calculate total expense
-  //   const totalExpense = paginatedEntries.reduce(
-  //     (sum, e) => sum + Number(e.expense || 0),
-  //     0
-  //   );
-
-  //   // Add a total row
-  //   worksheetData.push({
-  //     "#": "",
-  //     Date: "",
-  //     Remarks: "",
-  //     Category: "",
-  //     Type: "",
-  //     PaymentMode: "Total Expense",
-  //     Amount: "",
-  //     Balance: "",
-  //     Expenses: totalExpense,
-  //   });
-
-  //   const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-  //   const workbook = XLSX.utils.book_new();
-  //   XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
-
-  //   const excelBuffer = XLSX.write(workbook, {
-  //     bookType: "xlsx",
-  //     type: "array",
-  //   });
-
-  //   // Save file
-  //   const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-  //   saveAs(blob, "Transactions.xlsx");
-  // };
-  
   
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewData, setPreviewData] = useState([]);
@@ -442,7 +309,7 @@ const handlePrintPreview = () => {
   const preparePreview = () => {
     const worksheetData = paginatedEntries.map((e, i) => ({
       "#": i + 1,
-      Date: new Date(e.date).toLocaleString("bn-BD"),
+      Date: new Date(e.date).toLocaleDateString("bn-BD"),
       Remarks: e.remarks || "-",
       Category: e.category || "-",
       Type: e.type || "-",
@@ -490,7 +357,7 @@ const handlePrintPreview = () => {
     });
 
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, "Transactions.xlsx");
+    saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.xlsx`);
   };
 
   return (
@@ -576,7 +443,10 @@ const handlePrintPreview = () => {
         <button className="btn-outline btn btn-sm" onClick={handleReset}>
           <FaUndo className="mr-1" /> Reset
         </button>
-        <button className="btn-outline btn btn-sm" onClick={handlePrintPreview}>
+        <button
+          className="btn-outline btn btn-sm"
+          onClick={() => setShowPDFPreview(true)}
+        >
           <FaFilePdf className="mr-1" /> Export PDF
         </button>
         <button className="btn-outline btn btn-sm" onClick={preparePreview}>
@@ -696,6 +566,28 @@ const handlePrintPreview = () => {
           refetch={refetch}
         />
       )}
+      {/* PDF Preview Modal */}
+      {showPDFPreview && (
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
+          <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
+            <PDFViewer width="100%" height="100%">
+              {MyPDFDoc}
+            </PDFViewer>
+            <div className="right-10 bottom-10 absolute flex justify-end gap-2">
+              <button
+                className="btn-active btn"
+                onClick={() => setShowPDFPreview(false)}
+              >
+                Close
+              </button>
+              <button className="btn btn-primary" onClick={handleDownloadPDF}>
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {previewVisible && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded w-[90vw] max-h-[80vh] overflow-auto">

@@ -17,11 +17,12 @@ const CategoryTransactions = () => {
   } = useQuery({
     queryKey: ["entries-by-category", categoryName],
     queryFn: async () => {
-      const res = await axiosPublic.get(`/entries?category=${categoryName}`);
+      const res = await axiosPublic.get(`/entries/category/${categoryName}`);
       console.log("Fetched entries for category:", categoryName, res.data);
       return res.data?.entries || [];
     },
   });
+  if (isLoading) return <p className="text-center">Loading transactions...</p>;
 
   return (
     <div className="mt-4">

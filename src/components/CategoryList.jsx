@@ -9,7 +9,7 @@ const CategoryList = () => {
   const navigate = useNavigate();
   const [newCategory, setNewCategory] = useState("");
 
-  const { data: entries = [] } = useQuery({
+  const {isLoading, data: entries = [] } = useQuery({
     queryKey: ["entries"],
     queryFn: async () => {
       const res = await axiosPublic.get("/entries");
@@ -31,6 +31,7 @@ const CategoryList = () => {
     if (!newCategory.trim()) return;
     handleCategoryClick(newCategory.trim());
   };
+  if( isLoading) return <p className="text-center">Loading categories...</p>;
 
   return (
     <div className="space-y-4">

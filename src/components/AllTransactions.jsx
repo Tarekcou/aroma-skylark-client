@@ -50,6 +50,7 @@ const totalInstallmentCashIn = members.reduce(
     .reduce((sum, e) => sum + e.amount, 0);
   const netBalance =  totalInstallmentCashIn-cashOut;
 
+  if(isLoading) return <p className="text-center">Loading...</p>;
   return (
     <div
       className={`space-y-4 relative mx-auto    ${

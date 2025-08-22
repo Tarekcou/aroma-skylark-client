@@ -33,8 +33,6 @@ const TransactionFormModal = ({
     },
     enabled: propEntries.length === 0,
   });
- 
-
 
   useEffect(() => {
     setEntries(propEntries.length > 0 ? propEntries : fetchedEntries);
@@ -55,7 +53,6 @@ const TransactionFormModal = ({
     return [...new Set([...existing, ...customDivisions])];
   }, [entries, customDivisions]);
 
-  
   const handleAddCategory = () => {
     const trimmed = newCategory.trim();
     if (trimmed && !allCategories.includes(trimmed)) {
@@ -105,52 +102,72 @@ const TransactionFormModal = ({
       type: entry?.type || type,
       division: entry?.division || "",
       balance: entry?.balance || 0,
-      details:entry?.details || "",
+      details: entry?.details || "",
     },
   });
 
   // 🔹 Mutation for save
   // Save mutation
- const onSubmit = async (data) => {
-   try {
-     const amount = parseFloat(data.amount || 0);
+  const onSubmit = async (data) => {
+    try {
+      const amount = parseFloat(data.amount || 0);
 
-     // ✅ Prepare payload (no balance saved)
-     const payload = {
-       ...data,
-       amount,
-     };
+      // ✅ Prepare payload (no balance saved)
+      const payload = {
+        ...data,
+        amount,
+      };
 
-     console.log("Payload to save:", payload);
+      console.log("Payload to save:", payload);
 
-     // ✅ Direct Axios request (no react-query for now)
-     let response;
-     if (entry?._id) {
-       response = await axiosPublic.patch(`/entries/${entry._id}`, payload);
-     } else {
-       response = await axiosPublic.post("/entries", payload);
-     }
-     refetch()
+      // ✅ Direct Axios request (no react-query for now)
+      let response;
+      if (entry?._id) {
+        response = await axiosPublic.patch(`/entries/${entry._id}`, payload);
+      } else {
+        response = await axiosPublic.post("/entries", payload);
+      }
+      refetch();
       // ✅ Update local state
-     console.log("Saved successfully:", response.data);
-     toast.success("Transaction saved!");
-     // ✅ Reset form & close modal
-     reset?.();
-     closeModal?.();
-     onSuccess?.();
-   } catch (err) {
-     console.error("Error saving transaction:", err);
-     toast.error("Failed to save transaction");
-   }
- };
+      console.log("Saved successfully:", response.data);
+      toast.success("Transaction saved!");
+      // ✅ Reset form & close modal
+      reset?.();
+      closeModal?.();
+      onSuccess?.();
+    } catch (err) {
+      console.error("Error saving transaction:", err);
+      toast.error("Failed to save transaction");
+    }
+  };
+  // extra states
+  const [editingCategory, setEditingCategory] = useState(false);
+  const [editingType, setEditingType] = useState(false);
+  const [editingDivision, setEditingDivision] = useState(false);
 
+  const [editCategoryValue, setEditCategoryValue] = useState(
+    entry?.category || ""
+  );
+  const [editTypeValue, setEditTypeValue] = useState(entry?.type || "");
+  const [editDivisionValue, setEditDivisionValue] = useState(
+    entry?.division || ""
+  );
 
-
-
-
-
-
-
+  // 🔹 handle updates
+  const handleUpdateField = async (field, value) => {
+    try {
+      if (!entry?._id) return;
+      await axiosPublic.patch(`/entries/${entry._id}`, { [field]: value });
+      toast.success(`${field} updated`);
+      refetch?.();
+      if (field === "category") setEditingCategory(false);
+      if (field === "type") setEditingType(false);
+      if (field === "division") setEditingDivision(false);
+    } catch (err) {
+      toast.error(`Failed to update ${field}`);
+      console.error(err);
+    }
+  };
 
   return (
     <div
@@ -195,97 +212,207 @@ const TransactionFormModal = ({
           />
 
           {/* Category */}
+          {/* Category */}
           <div>
-            <select
-              {...register("category")}
-              className="w-full select-bordered select"
-            >
-              <option value="">Select Category</option>
-              {allCategories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                placeholder="New category"
-                className="input-bordered w-full input input-sm"
-              />
-              <button
-                type="button"
-                className="btn-outline btn btn-sm"
-                onClick={handleAddCategory}
-              >
-                +
-              </button>
-            </div>
+            {!editingCategory ? (
+              <>
+                <select
+                  {...register("category")}
+                  className="w-full select-bordered select"
+                >
+                  <option value="">Select Category</option>
+                  {allCategories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="New category"
+                    className="input-bordered w-full input input-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddCategory}
+                    className="btn-outline btn btn-sm"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingCategory(true)}
+                    className="btn-outline btn btn-sm"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  value={editCategoryValue}
+                  onChange={(e) => setEditCategoryValue(e.target.value)}
+                  className="input-bordered w-full input input-sm"
+                />
+                <button
+                  type="button"
+                  className="btn btn-success btn-sm"
+                  onClick={() =>
+                    handleUpdateField("category", editCategoryValue)
+                  }
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline btn btn-sm"
+                  onClick={() => setEditingCategory(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Type */}
+          {/* Type */}
           <div>
-            <select
-              {...register("type")}
-              className="w-full select-bordered select"
-            >
-              <option value="">Select Type</option>
-              {allTypes.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                value={newType}
-                onChange={(e) => setNewType(e.target.value)}
-                placeholder="New Type"
-                className="input-bordered w-full input input-sm"
-              />
-              <button
-                type="button"
-                onClick={handleAddType}
-                className="btn-outline btn btn-sm"
-              >
-                +
-              </button>
-            </div>
+            {!editingType ? (
+              <>
+                <select
+                  {...register("type")}
+                  className="w-full select-bordered select"
+                >
+                  <option value="">Select Type</option>
+                  {allTypes.map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value)}
+                    placeholder="New Type"
+                    className="input-bordered w-full input input-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddType}
+                    className="btn-outline btn btn-sm"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingType(true)}
+                    className="btn-outline btn btn-sm"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  value={editTypeValue}
+                  onChange={(e) => setEditTypeValue(e.target.value)}
+                  className="input-bordered w-full input input-sm"
+                />
+                <button
+                  type="button"
+                  className="btn btn-success btn-sm"
+                  onClick={() => handleUpdateField("type", editTypeValue)}
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline btn btn-sm"
+                  onClick={() => setEditingType(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Division */}
+          {/* Division */}
           <div>
-            <select
-              {...register("division")}
-              className="w-full select-bordered select"
-            >
-              <option value="">Select Division</option>
-              {allDivisions.map((d) => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </select>
-            <div className="flex gap-2 mt-2">
-              <input
-                type="text"
-                value={newDivision}
-                onChange={(e) => setNewDivision(e.target.value)}
-                placeholder="New Division"
-                className="input-bordered w-full input input-sm"
-              />
-              <button
-                type="button"
-                onClick={handleAddDivision}
-                className="btn-outline btn btn-sm"
-              >
-                +
-              </button>
-            </div>
+            {!editingDivision ? (
+              <>
+                <select
+                  {...register("division")}
+                  className="w-full select-bordered select"
+                >
+                  <option value="">Select Division</option>
+                  {allDivisions.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2 mt-2">
+                  <input
+                    type="text"
+                    value={newDivision}
+                    onChange={(e) => setNewDivision(e.target.value)}
+                    placeholder="New Division"
+                    className="input-bordered w-full input input-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddDivision}
+                    className="btn-outline btn btn-sm"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingDivision(true)}
+                    className="btn-outline btn btn-sm"
+                  >
+                    ✏️
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="flex gap-2 mt-2">
+                <input
+                  type="text"
+                  value={editDivisionValue}
+                  onChange={(e) => setEditDivisionValue(e.target.value)}
+                  className="input-bordered w-full input input-sm"
+                />
+                <button
+                  type="button"
+                  className="btn btn-success btn-sm"
+                  onClick={() =>
+                    handleUpdateField("division", editDivisionValue)
+                  }
+                >
+                  Save
+                </button>
+                <button
+                  type="button"
+                  className="btn-outline btn btn-sm"
+                  onClick={() => setEditingDivision(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
+
           <input
             type="text"
             className="input-bordered w-full input"

@@ -8,9 +8,6 @@ import Swal from "sweetalert2";
 import { MdAdd } from "react-icons/md";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
-import autoTable from "jspdf-autotable";   // ✅ add this
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import {
   Document,
@@ -20,9 +17,8 @@ import {
   StyleSheet,
   Font,
   pdf,
+  PDFViewer,
 } from "@react-pdf/renderer";
-
-const ITEMS_PER_PAGE = 10;
 
 // 🔹 Register Bangla font once
 Font.register({
@@ -44,9 +40,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderBottomWidth: 0,
   },
-  row: {
-    flexDirection: "row",
-  },
+  row: { flexDirection: "row" },
   cell: {
     borderStyle: "solid",
     borderWidth: 1,
@@ -58,74 +52,98 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 18,
     textAlign: "center",
-    marginBottom: 20,
+    marginBottom: 10,
     fontWeight: "bold",
   },
-  content: {
-    fontSize: 12,
-    lineHeight: 1.5,
-  },
-  headerCell: {
-    backgroundColor: "#f0f0f0",
-    fontWeight: "bold",
-  },
+  subHeader: { fontSize: 12, marginBottom: 10 },
+  headerCell: { backgroundColor: "#f0f0f0", fontWeight: "bold" },
 });
+
+// 🔹 Shared table headers
+const headers = [
+  "#",
+  "Date",
+  "Name",
+  "Phone",
+  "Subscription",
+  "Total Paid",
+  "Due",
+];
+const colWidth = `${100 / headers.length}%`;
+
+// 🔹 Extracted Document component
+const MyDocument = ({
+  members,
+  formattedDate,
+  calculateTotalPaid,
+  calculateDue,
+}) => (
+  <Document>
+    <Page size="A4" orientation="landscape" style={styles.page}>
+      <Text style={styles.header}>Members Report</Text>
+      <Text style={styles.subHeader}>Date: {formattedDate}</Text>
+
+      <View style={styles.table}>
+        {/* Header Row */}
+        <View style={styles.row}>
+          {headers.map((h, i) => (
+            <Text
+              key={i}
+              style={[styles.cell, styles.headerCell, { width: colWidth }]}
+            >
+              {h}
+            </Text>
+          ))}
+        </View>
+
+        {/* Body Rows */}
+        {members.map((m, idx) => {
+          const totalPaid = calculateTotalPaid(m);
+          const due = calculateDue(m);
+
+          return (
+            <View key={idx} style={styles.row}>
+              <Text style={[styles.cell, { width: colWidth }]}>{idx + 1}</Text>
+              <Text style={[styles.cell, { width: colWidth }]}>
+                {formattedDate}
+              </Text>
+              <Text style={[styles.cell, { width: colWidth }]}>{m.name}</Text>
+              <Text style={[styles.cell, { width: colWidth }]}>{m.phone}</Text>
+              <Text style={[styles.cell, { width: colWidth }]}>
+                {m.subscription || 0}
+              </Text>
+              <Text style={[styles.cell, { width: colWidth }]}>
+                {totalPaid || 0}
+              </Text>
+              <Text style={[styles.cell, { width: colWidth }]}>{due || 0}</Text>
+            </View>
+          );
+        })}
+      </View>
+    </Page>
+  </Document>
+);
 
 const MembersPage = () => {
   const [modalData, setModalData] = useState(null);
   const queryClient = useQueryClient();
+  const [showExcelPreview, setShowExcelPreview] = useState(false);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
 
-  const {
-    refetch,
-    data: members = [],
-    isLoading,
-  } = useQuery({
+  const { refetch, data: members = [] } = useQuery({
     queryKey: ["members"],
-    queryFn: async () => {
-      const res = await axiosPublic.get("/members");
-      console.log(res.data.members);
-      return res.data.members || [];
-    },
+    queryFn: async () => (await axiosPublic.get("/members")).data.members || [],
   });
-  const [installments, setInstallments] = useState([]);
-  const getInstallmentsFromMember = (member) => {
-    const keys = Object.keys(member);
-    const payments = keys.filter(
-      (k) => k.startsWith("payment") && k.endsWith("Amount")
-    );
-    const numbers = payments.map((k) => k.match(/\d+/)?.[0]);
-    const uniqueNumbers = Array.from(new Set(numbers)).sort((a, b) => +a - +b);
-    return uniqueNumbers;
-  };
-  useEffect(() => {
-    if (members.length > 0) {
-      const allNumbers = members.flatMap(getInstallmentsFromMember);
-      const uniqueSorted = Array.from(new Set(allNumbers)).sort(
-        (a, b) => +a - +b
-      );
-      setInstallments(uniqueSorted);
-    }
-  }, [members]);
-
-  // Add new installment column dynamically
-  const handleAddInstallment = () => {
-    const nextNumber = installments.length
-      ? `${Number(installments[installments.length - 1]) + 1}`
-      : "1";
-    setInstallments((prev) => [...prev, nextNumber]);
-  };
 
   const defaultSubscription = 300000;
-  // Calculate totals
-  const calculateTotalPaid = (member) => {
-    return installments.reduce((sum, i) => {
-      return sum + (member[`payment${i}Amount`] || 0);
-    }, 0);
-  };
+  const calculateTotalPaid = (member) =>
+    Object.keys(member)
+      .filter((k) => k.startsWith("payment") && k.endsWith("Amount"))
+      .reduce((sum, k) => sum + (member[k] || 0), 0);
 
-  const calculateDue = (member) => {
-    return defaultSubscription - calculateTotalPaid(member);
-  };
+  const calculateDue = (member) =>
+    defaultSubscription - calculateTotalPaid(member);
+
   const deleteMutation = useMutation({
     mutationFn: async (id) => await axiosPublic.delete(`/members/${id}`),
     onSuccess: () => {
@@ -137,141 +155,80 @@ const MembersPage = () => {
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: "Are you sure?",
-      text: "This transaction will be permanently deleted!",
+      text: "This member will be permanently deleted!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
     });
-
-    if (!result.isConfirmed) return;
-
-    try {
-      deleteMutation.mutate(id);
-      if (refetch) refetch();
-    } catch (err) {
-      toast.error("Failed to delete entry");
-    }
+    if (result.isConfirmed) deleteMutation.mutate(id);
   };
 
-  // 📌 Download as Excel
-  const handleDownloadExcel = () => {
-    if (members.length === 0) {
-      toast.error("No members to export");
-      return;
-    }
-    const worksheet = XLSX.utils.json_to_sheet(members);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-    const data = new Blob([excelBuffer], {
-      type: "application/octet-stream",
-    });
-    saveAs(data, "members.xlsx");
-  };
+ const handleDownloadExcel = () => {
+   if (members.length === 0) return toast.error("No members to export");
 
-  // 📌 Download as PDF
-  // 📌 Download as PDF
-  // 📌 Download as PDF (React PDF Renderer)
+   // Build rows just like your table
+   const rows = members.map((m, i) => {
+     const totalPaid = calculateTotalPaid(m);
+     const due = calculateDue(m);
+     return {
+       SL: i + 1,
+       Name: m.name,
+       Phone: m.phone,
+       Subscription: m.subscription,
+       "Total Paid": totalPaid || 0,
+       "Ind. Due": due,
+     };
+   });
+
+   // Convert rows -> sheet
+   const worksheet = XLSX.utils.json_to_sheet(rows);
+   const workbook = XLSX.utils.book_new();
+   XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
+   const excelBuffer = XLSX.write(workbook, {
+     bookType: "xlsx",
+     type: "array",
+   });
+
+   saveAs(
+     new Blob([excelBuffer], { type: "application/octet-stream" }),
+     "members.xlsx"
+   );
+ };
+
+  const formattedDate = new Date()
+    .toLocaleDateString("en-GB")
+    .replace(/\//g, "-");
+
   const handleDownloadPDF = async () => {
-    if (!members || members.length === 0) {
-      toast.error("No members to export");
-      return;
-    }
-
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString("en-GB").replace(/\//g, "-");
-
-    // Table headers
-    const headers = [
-      "#",
-      "Date",
-      "Name",
-      "Phone",
-      "Subscription",
-      "Total Paid",
-      "Due",
-    ];
-    const colWidth = `${100 / headers.length}%`;
-
-    const MyDocument = (
-      <Document>
-        <Page size="A4" orientation="landscape" style={styles.page}>
-          {/* Title + Date */}
-          <Text style={styles.header}>Members Report</Text>
-          <Text style={styles.subHeader}>Date: {formattedDate}</Text>
-
-          {/* Table */}
-          <View style={styles.table}>
-            {/* Header Row */}
-            <View style={styles.row}>
-              {headers.map((h, i) => (
-                <Text
-                  key={i}
-                  style={[styles.cell, styles.headerCell, { width: colWidth }]}
-                >
-                  {h}
-                </Text>
-              ))}
-            </View>
-
-            {/* Body Rows */}
-            {members.map((m, idx) => {
-              const totalPaid = calculateTotalPaid(m);
-              const due = calculateDue(m);
-
-              return (
-                <View key={idx} style={styles.row}>
-                  <Text style={[styles.cell, { width: colWidth }]}>
-                    {idx + 1}
-                  </Text>
-                  <Text style={[styles.cell, { width: colWidth }]}>
-                    {formattedDate}
-                  </Text>
-                  <Text style={[styles.cell, { width: colWidth }]}>
-                    {m.name}
-                  </Text>
-                  <Text style={[styles.cell, { width: colWidth }]}>
-                    {m.phone}
-                  </Text>
-                  <Text style={[styles.cell, { width: colWidth }]}>
-                    {m.subscription || 0}
-                  </Text>
-                  <Text style={[styles.cell, { width: colWidth }]}>
-                    {totalPaid || 0}
-                  </Text>
-                  <Text style={[styles.cell, { width: colWidth }]}>
-                    {due || 0}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        </Page>
-      </Document>
-    );
-
-    const blob = await pdf(MyDocument).toBlob();
+    if (!members || members.length === 0)
+      return toast.error("No members to export");
+    const blob = await pdf(
+      <MyDocument
+        members={members}
+        formattedDate={formattedDate}
+        calculateTotalPaid={calculateTotalPaid}
+        calculateDue={calculateDue}
+      />
+    ).toBlob();
     saveAs(blob, `members_${formattedDate}.pdf`);
   };
 
   return (
     <div className="space-y-4">
+      {/* Header + Buttons */}
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-xl">👥 Members</h2>
         <div className="flex gap-2">
           <button
-            onClick={handleDownloadPDF}
+            onClick={() => setShowPDFPreview(true)}
             className="btn-outline btn btn-sm"
           >
             <FaFilePdf className="text-red-600" /> PDF
           </button>
           <button
-            onClick={handleDownloadExcel}
+            onClick={() => setShowExcelPreview(true)}
             className="btn-outline btn btn-sm"
           >
             <FaFileExcel /> Excel
@@ -284,7 +241,7 @@ const MembersPage = () => {
           </button>
         </div>
       </div>
-
+      {/* Members Table */}
       <div className="bg-white shadow rounded overflow-x-auto">
         <table className="table table-zebra w-full">
           <thead>
@@ -332,20 +289,85 @@ const MembersPage = () => {
           </tbody>
         </table>
       </div>
+      {/* Excel Preview Modal */}
+      {showExcelPreview && (
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 p-4">
+          <div className="bg-white p-6 rounded-lg w-full h-full overflow-auto">
+            <h2 className="mb-4 font-bold text-lg">📊 Excel Preview</h2>
+            <table className="border w-full text-sm border-collapse table-auto">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-2 py-1 border">SL</th>
+                  <th className="px-2 py-1 border">Name</th>
+                  <th className="px-2 py-1 border">Phone</th>
+                  <th className="px-2 py-1 border">Subscription</th>
+                  <th className="px-2 py-1 border">Total Paid</th>
+                  <th className="px-2 py-1 border">Ind. Due</th>
+                </tr>
+              </thead>
+              <tbody>
+                {members.map((m, i) => {
+                  const totalPaid = calculateTotalPaid(m);
+                  const due = calculateDue(m);
+                  return (
+                    <tr key={m._id}>
+                      <td className="px-2 py-1 border">{i + 1}</td>
+                      <td className="px-2 py-1 border">{m.name}</td>
+                      <td className="px-2 py-1 border">{m.phone}</td>
+                      <td className="px-2 py-1 border">{m.subscription}</td>
+                      <td className="px-2 py-1 border font-semibold text-green-600">
+                        {totalPaid || 0}
+                      </td>
+                      <td className="px-2 py-1 border font-semibold text-red-600">
+                        {due}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
 
-      <button
-        onClick={() => setModalData({})}
-        className="md:hidden bottom-0 left-1/2 z-30 absolute -translate-x-1/2 transform btn btn-primary btn-sm"
-      >
-        <MdAdd /> Add Member
-      </button>
-
-      {members.length === 0 && (
-        <p className="flex justify-center items-center min-h-[50vh] text-gray-500 text-center">
-          No Members found.
-        </p>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                className="btn-outline btn"
+                onClick={() => setShowExcelPreview(false)}
+              >
+                Close
+              </button>
+              <button className="btn btn-primary" onClick={handleDownloadExcel}>
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
       )}
-
+      {/* PDF Preview Modal */}
+      {showPDFPreview && (
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
+          <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
+            <PDFViewer width="100%" height="100%">
+              <MyDocument
+                members={members}
+                formattedDate={formattedDate}
+                calculateTotalPaid={calculateTotalPaid}
+                calculateDue={calculateDue}
+              />
+            </PDFViewer>
+            <div className="right-10 bottom-10 absolute flex justify-end gap-2">
+              <button
+                className="btn-active btn"
+                onClick={() => setShowPDFPreview(false)}
+              >
+                Close
+              </button>
+              <button className="btn btn-primary" onClick={handleDownloadPDF}>
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Modal */}
       {modalData && (
         <MemberModal data={modalData} closeModal={() => setModalData(null)} />
       )}
