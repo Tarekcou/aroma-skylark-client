@@ -330,7 +330,6 @@ const handlePrintPreview = () => {
 
         <td>${e.mode || "-"}</td>
         <td>${e.amount || "-"}</td>
-        <td>${e.balance || "-"}</td>
         <td>${e.expense || "-"}</td>
       </tr>
     `
@@ -363,7 +362,6 @@ const handlePrintPreview = () => {
 
               <th>Pmt Mode</th>
               <th>Amount</th>
-              <th>Balance</th>
               <th>Expenses</th>
             </tr>
           </thead>
@@ -372,7 +370,7 @@ const handlePrintPreview = () => {
             <tr>
               <td colspan="7"></td>
               <td><b>Total Expense</b></td>
-              <td colspan="3">${totalExpense}</td>
+              <td colspan="2">${totalExpense}</td>
             </tr>
           </tbody>
         </table>
@@ -453,7 +451,7 @@ const handlePrintPreview = () => {
 
       PaymentMode: e.mode || "-",
       Amount: e.amount || "-",
-      Balance: e.balance || "-",
+      // Balance: e.balance || "-",
       Expenses: e.expense || "-",
     }));
 
@@ -472,7 +470,7 @@ const handlePrintPreview = () => {
       details: "",
       PaymentMode: "Total Expense", // This will span multiple columns in Excel
       Amount: "",
-      Balance: "",
+      // Balance: "",
       Expenses: totalExpense, // Total amount aligned under Expenses column
     });
 
@@ -621,7 +619,7 @@ const handlePrintPreview = () => {
               <th>Details</th>
               <th>Pmt Mode</th>
               <th>Amount</th>
-              <th>Balance</th>
+              {/* <th>Balance</th> */}
               <th>Expenses</th> {/* NEW */}
               {isAuthenticated && <th>Actions</th>}
             </tr>
@@ -644,11 +642,11 @@ const handlePrintPreview = () => {
                 >
                   {e.type === "cash-in" ? "+" : "-"} {e.amount}
                 </td>
-                <td
+                {/* <td
                   className={e.balance >= 0 ? "text-green-600" : "text-red-600"}
                 >
                   {e.balance}
-                </td>
+                </td> */}
                 <td className="text-red-600">{e.expense}</td> {/* NEW */}
                 {isAuthenticated && (
                   <td>
@@ -674,7 +672,7 @@ const handlePrintPreview = () => {
           {/* 🔹 Footer for total expense */}
           <tfoot>
             <tr className="bg-base-200 font-bold text-sm text-center">
-              <td colSpan={10}>Total Expenses</td>
+              <td colSpan={9}>Total Expenses</td>
               {/* <td>-</td> */}
               <td className="text-red-600">{totalExpense}</td>
               {isAuthenticated && <td></td>}
