@@ -83,6 +83,8 @@ const ProductDetails = () => {
     date: new Date().toISOString().slice(0, 10),
   });
   const [editing, setEditing] = useState(null); // index being edited
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [showExcelPreview, setShowExcelPreview] = useState(false);
   const [editData, setEditData] = useState({
     type: "in",
     quantity: "",
@@ -158,8 +160,9 @@ const ProductDetails = () => {
     });
   };
   // Inside ProductDetails.jsx
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  const PDFDocument = ({ logs, productName }) => (
+  const MyPDFDoc = ({ logs, productName }) => (
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.header}>{productName} - Stock Logs</Text>
@@ -167,7 +170,7 @@ const ProductDetails = () => {
         {/* Table Header */}
         <View style={[styles.table, { marginBottom: 5 }]}>
           <View style={styles.row}>
-            {["তারিখ", "Type", "Quantity", "Remarks", "Stock"].map((header) => (
+            {["Date", "Type", "Quantity", "Remarks", "Stock"].map((header) => (
               <Text key={header} style={[styles.cell, styles.headerCell]}>
                 {header}
               </Text>
@@ -189,13 +192,14 @@ const ProductDetails = () => {
     </Document>
   );
 
-  // Export function using react-pdf
-  const exportPDF = async (logs, productName) => {
-    const doc = <PDFDocument logs={logs} productName={productName} />;
-    const asPdf = pdf(doc); // pdf() returns a blob-like object
-    const blob = await asPdf.toBlob();
-    saveAs(blob, `${productName}-stock-logs.pdf`);
+  
+  const handleDownloadPDF = async () => {
+    const blob = await pdf(
+      <MyPDFDoc logs={product.logs} productName={product.name} />
+    ).toBlob();
+    saveAs(blob, `${product.name}-stock-logs.pdf`);
   };
+
 
   const exportExcel = (logs, productName) => {
     const worksheet = XLSX.utils.json_to_sheet(
@@ -218,8 +222,7 @@ const ProductDetails = () => {
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, `${productName}-stock-logs.xlsx`);
   };
-const [showPDFPreview, setShowPDFPreview] = useState(false);
-const [showExcelPreview, setShowExcelPreview] = useState(false);
+
 
   return (
     <div className="space-y-4 md:p-4">
@@ -307,15 +310,33 @@ const [showExcelPreview, setShowExcelPreview] = useState(false);
         </div>
         <div className="flex gap-2">
           <button
-            className="btn btn-primary btn-sm"
-            onClick={() => setShowPDFPreview(true)}
+            className="btn-outline btn btn-sm"
+            onClick={async () => {
+              if (isMobile) {
+                // Mobile → generate + open externally
+                const blob = await pdf(MyPDFDoc).toBlob();
+                const url = URL.createObjectURL(blob);
+                window.open(url); // opens in Google Drive, Adobe, etc.
+              } else {
+                // Desktop → show preview modal
+                setShowPDFPreview(true);
+              }
+            }}
           >
-            <FaFilePdf /> PDF
+            <FaFilePdf className="mr-1" /> Export PDF
           </button>
 
           <button
             className="btn btn-secondary btn-sm"
-            onClick={() => setShowExcelPreview(true)}
+            onClick={() => {
+              if (isMobile) {
+                // 📱 Mobile → skip preview, directly export & open
+                exportExcel(product.logs, product.name);
+              } else {
+                // 💻 Desktop → show preview modal
+                setShowExcelPreview(true);
+              }
+            }}
           >
             <FaFileExcel /> Excel
           </button>
@@ -550,20 +571,21 @@ const [showExcelPreview, setShowExcelPreview] = useState(false);
         </table>
       </div>
       {/* 🔹 PDF Preview Modal */}
-      {showPDFPreview && (
+      {showPDFPreview && !isMobile && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
-          <div className="relative bg-white shadow-lg rounded-lg w-full h-[90vh]">
+          <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
             <PDFViewer width="100%" height="100%">
-              <PDFDocument logs={product.logs} productName={product.name} />
+              <MyPDFDoc logs={product.logs} productName={product.name} />
             </PDFViewer>
-            <div className="right-3 bottom-3 absolute flex gap-2">
-              <button className="btn" onClick={() => setShowPDFPreview(false)}>
+
+            <div className="right-10 bottom-10 absolute flex justify-end gap-2">
+              <button
+                className="btn-active btn"
+                onClick={() => setShowPDFPreview(false)}
+              >
                 Close
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => exportPDF(product.logs, product.name)}
-              >
+              <button className="btn btn-primary" onClick={handleDownloadPDF}>
                 Download
               </button>
             </div>

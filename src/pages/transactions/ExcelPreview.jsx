@@ -19,10 +19,7 @@ const ExcelPreview = ({ entries = [], page = 1, itemsPerPage = 10 }) => {
       Expenses: e.expense || "-",
     }));
 
-    const totalExpense = entries.reduce(
-      (sum, e) => sum + Number(e.expense || 0),
-      0
-    );
+    const totalExpense = entries.reduce((sum, e) => sum + Number(e.expense || 0), 0);
 
     worksheetData.push({
       "#": "",
@@ -45,10 +42,7 @@ const ExcelPreview = ({ entries = [], page = 1, itemsPerPage = 10 }) => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Transactions");
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(blob, "Transactions.xlsx");
   };
@@ -67,9 +61,7 @@ const ExcelPreview = ({ entries = [], page = 1, itemsPerPage = 10 }) => {
               <thead>
                 <tr>
                   {Object.keys(previewData[0]).map((key) => (
-                    <th key={key} className="px-2 py-1 border">
-                      {key}
-                    </th>
+                    <th key={key} className="px-2 py-1 border">{key}</th>
                   ))}
                 </tr>
               </thead>
@@ -77,27 +69,15 @@ const ExcelPreview = ({ entries = [], page = 1, itemsPerPage = 10 }) => {
                 {previewData.map((row, i) => (
                   <tr key={i}>
                     {Object.values(row).map((val, j) => (
-                      <td key={j} className="px-2 py-1 border text-center">
-                        {val}
-                      </td>
+                      <td key={j} className="px-2 py-1 border text-center">{val}</td>
                     ))}
                   </tr>
                 ))}
               </tbody>
             </table>
             <div className="flex justify-end gap-2 mt-4">
-              <button
-                className="bg-gray-300 px-4 py-2 rounded"
-                onClick={() => setPreviewVisible(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-green-500 px-4 py-2 rounded text-white"
-                onClick={downloadExcel}
-              >
-                Download Excel
-              </button>
+              <button className="bg-gray-300 px-4 py-2 rounded" onClick={() => setPreviewVisible(false)}>Cancel</button>
+              <button className="bg-green-500 px-4 py-2 rounded text-white" onClick={downloadExcel}>Download Excel</button>
             </div>
           </div>
         </div>

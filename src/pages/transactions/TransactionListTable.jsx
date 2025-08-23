@@ -248,8 +248,8 @@ const [previewDoc, setPreviewDoc] = useState(null);
              "Division",
              "Details",
              "Pmt Mode",
-             "Amount",
              "Expenses",
+             "Balance",
            ].map((h, i) => (
              <Text key={i} style={[styles.cell, styles.headerCell]}>
                {h}
@@ -287,8 +287,8 @@ const [previewDoc, setPreviewDoc] = useState(null);
            <Text style={styles.cell}></Text>
            <Text style={styles.cell}>Total Expense</Text>
            <Text style={styles.cell}></Text>
-           <Text style={styles.cell}></Text>
            <Text style={styles.cell}>{totalExpense}</Text>
+           <Text style={styles.cell}></Text>
          </View>
        </View>
      </Page>
@@ -300,6 +300,7 @@ const [previewDoc, setPreviewDoc] = useState(null);
    const blob = await pdf(MyPDFDoc).toBlob();
    saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
  };
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 
   
@@ -317,13 +318,13 @@ const [previewDoc, setPreviewDoc] = useState(null);
       details: e.details || "-",
 
       PaymentMode: e.mode || "-",
-      Amount: e.amount || "-",
+      Expense: e.amount || "-",
       // Balance: e.balance || "-",
-      Expenses: e.expense || "-",
+      Balance: e.expense || "-",
     }));
 
     const totalExpense = paginatedEntries.reduce(
-      (sum, e) => sum + Number(e.expense || 0),
+      (sum, e) => sum + Number(e.amount || 0),
       0
     );
 
@@ -336,9 +337,9 @@ const [previewDoc, setPreviewDoc] = useState(null);
       Division: "",
       details: "",
       PaymentMode: "Total Expense", // This will span multiple columns in Excel
-      Amount: "",
+      Expenses: totalExpense,
       // Balance: "",
-      Expenses: totalExpense, // Total amount aligned under Expenses column
+      Balance: "", // Total amount aligned under Expenses column
     });
 
 
@@ -445,10 +446,21 @@ const [previewDoc, setPreviewDoc] = useState(null);
         </button>
         <button
           className="btn-outline btn btn-sm"
-          onClick={() => setShowPDFPreview(true)}
+          onClick={async () => {
+            if (isMobile) {
+              // Mobile → generate + open externally
+              const blob = await pdf(MyPDFDoc).toBlob();
+              const url = URL.createObjectURL(blob);
+              window.open(url); // opens in Google Drive, Adobe, etc.
+            } else {
+              // Desktop → show preview modal
+              setShowPDFPreview(true);
+            }
+          }}
         >
           <FaFilePdf className="mr-1" /> Export PDF
         </button>
+
         <button className="btn-outline btn btn-sm" onClick={preparePreview}>
           <FaFileExcel className="mr-1 text-green-600" /> Export Excel
         </button>
@@ -488,9 +500,9 @@ const [previewDoc, setPreviewDoc] = useState(null);
               <th>Division</th>
               <th>Details</th>
               <th>Pmt Mode</th>
-              <th>Amount</th>
+              <th>Expense</th>
               {/* <th>Balance</th> */}
-              <th>Expenses</th> {/* NEW */}
+              <th>Balance</th> {/* NEW */}
               {isAuthenticated && <th>Actions</th>}
             </tr>
           </thead>
@@ -542,9 +554,9 @@ const [previewDoc, setPreviewDoc] = useState(null);
           {/* 🔹 Footer for total expense */}
           <tfoot>
             <tr className="bg-base-200 font-bold text-sm text-center">
-              <td colSpan={9}>Total Expenses</td>
+              <td colSpan={8}>Total Expenses</td>
               {/* <td>-</td> */}
-              <td className="text-red-600">{totalExpense}</td>
+              <td className="text-red-600">-{totalExpense}</td>
               {isAuthenticated && <td></td>}
             </tr>
           </tfoot>
@@ -567,7 +579,7 @@ const [previewDoc, setPreviewDoc] = useState(null);
         />
       )}
       {/* PDF Preview Modal */}
-      {showPDFPreview && (
+      {showPDFPreview && !isMobile && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
           <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
             <PDFViewer width="100%" height="100%">
