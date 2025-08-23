@@ -7,13 +7,19 @@ import {
   StyleSheet,
   PDFViewer,
   pdf,
+  Font,
 } from "@react-pdf/renderer";
-import { PDFDownloadLink } from "@react-pdf/renderer";
+import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
 import axiosPublic from "../../axios/AxiosPublic";
 import toast from "react-hot-toast";
 import { MdDelete } from "react-icons/md";
-import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+
+// Load Bangla font
+Font.register({
+  family: "SolaimanLipi",
+  src: window.location.origin + "/fonts/SolaimanLipi.ttf",
+});
 
 const MemberDetailsModal = ({ member, onClose, refetch }) => {
   const [installments, setInstallments] = useState(
@@ -32,72 +38,33 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
   );
 
   const [showPDFPreview, setShowPDFPreview] = useState(false);
-  const [showExcelPreview, setShowExcelPreview] = useState(false);
   const [excelData, setExcelData] = useState([]);
+  const [showExcelPreview, setShowExcelPreview] = useState(false);
 
-  const handleAdd = () => {
-    const newId = installments.length
-      ? Number(installments[installments.length - 1].id) + 1
-      : 1;
-    setInstallments([
-      ...installments,
-      { id: newId, date: "", amount: 0, details: "" },
-    ]);
-  };
-
-  const handleSave = async () => {
-    const updates = {};
-    installments.forEach((inst) => {
-      updates[`payment${inst.id}Date`] = inst.date;
-      updates[`payment${inst.id}Amount`] = inst.amount;
-      updates[`payment${inst.id}Details`] = inst.details;
-    });
-
-    try {
-      await axiosPublic.patch(`/members/${member._id}`, updates);
-      toast.success("Installments updated");
-      refetch();
-      onClose();
-    } catch {
-      toast.error("Failed to update");
-    }
-  };
-
-  const handleDelete = async (id) => {
-    setInstallments((prev) => prev.filter((i) => i.id !== id));
-    const updates = {
-      unset: {
-        [`payment${id}Date`]: 1,
-        [`payment${id}Amount`]: 1,
-        [`payment${id}Details`]: 1,
-      },
-    };
-    try {
-      await axiosPublic.patch(`/members/${member._id}`, updates);
-      toast.success(`Payment ${id} deleted`);
-      refetch();
-    } catch {
-      toast.error("Failed to delete payment");
-    }
-  };
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   const getCumulativeTotal = (idx) =>
     installments.slice(0, idx + 1).reduce((sum, i) => sum + (i.amount || 0), 0);
-
   const totalPayment = installments.reduce(
     (sum, i) => sum + (i.amount || 0),
     0
   );
 
+  // Styles for PDF
   const styles = StyleSheet.create({
-    page: { padding: 20 },
-    header: { fontSize: 18, marginBottom: 10, textAlign: "center" },
+    page: { padding: 20, fontFamily: "SolaimanLipi" },
+
+    header: {
+      fontSize: 16,
+      marginBottom: 10,
+      textAlign: "center",
+      fontFamily: "SolaimanLipi",
+    },
     table: {
       display: "table",
       width: "auto",
       borderStyle: "solid",
       borderWidth: 1,
-      borderColor: "#000",
     },
     tableRow: { flexDirection: "row" },
     tableCol: {
@@ -109,22 +76,13 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
     tableCell: { fontSize: 10 },
   });
 
-  const colWidths = [0.1, 0.2, 0.2, 0.3, 0.2]; // relative widths of columns
+  const colWidths = [0.1, 0.2, 0.2, 0.3, 0.2];
 
-  {
-    /* PDFDocument component */
-  }
-  const PDFDocument = ({
-    member,
-    installments,
-    getCumulativeTotal,
-    totalPayment,
-  }) => (
+  const PDFDocument = () => (
     <Document>
       <Page size="A4" style={styles.page}>
         <Text style={styles.header}>Payment Details - {member.name}</Text>
         <View style={styles.table}>
-          {/* Header */}
           <View style={styles.tableRow}>
             {["#", "Date", "Amount", "Details", "Total Paid"].map(
               (header, idx) => (
@@ -138,7 +96,6 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
             )}
           </View>
 
-          {/* Data rows */}
           {installments.map((i, idx) => (
             <View style={styles.tableRow} key={i.id}>
               <View style={{ ...styles.tableCol, flex: colWidths[0] }}>
@@ -159,27 +116,24 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
             </View>
           ))}
 
-          {/* Total row */}
           <View style={styles.tableRow}>
             <View style={{ ...styles.tableCol, flex: colWidths[0] }}>
               <Text style={styles.tableCell}>Total</Text>
             </View>
-            <View style={{ ...styles.tableCol, flex: colWidths[1] }}></View>
+            <View style={{ ...styles.tableCol, flex: colWidths[1] }} />
             <View style={{ ...styles.tableCol, flex: colWidths[2] }}>
               <Text style={styles.tableCell}>{totalPayment}</Text>
             </View>
-            <View style={{ ...styles.tableCol, flex: colWidths[3] }}></View>
-            <View style={{ ...styles.tableCol, flex: colWidths[4] }}></View>
+            <View style={{ ...styles.tableCol, flex: colWidths[3] }} />
+            <View style={{ ...styles.tableCol, flex: colWidths[4] }} />
           </View>
         </View>
       </Page>
     </Document>
   );
 
-
-
   const handleDownloadPDF = async () => {
-    const blob = await pdf(PDFDocument).toBlob();
+    const blob = await pdf(PDFDocument()).toBlob();
     saveAs(blob, `${member.name}-payments.pdf`);
   };
 
@@ -191,7 +145,6 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
       Details: i.details,
       "Total Paid": getCumulativeTotal(idx),
     }));
-
     data.push({
       "#": "",
       Date: "",
@@ -199,63 +152,46 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
       Details: "",
       "Total Paid": totalPayment,
     });
-
     setExcelData(data);
     setShowExcelPreview(true);
   };
 
   const downloadExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(excelData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Payments");
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-    const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(blob, `${member.name}-payments.xlsx`);
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Payments");
+    const buf = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveAs(
+      new Blob([buf], { type: "application/octet-stream" }),
+      `${member.name}-payments.xlsx`
+    );
   };
 
-  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const handleDelete = async (id) => {
+    setInstallments((prev) => prev.filter((i) => i.id !== id));
+    const updates = {
+      unset: {
+        [`payment${id}Date`]: 1,
+        [`payment${id}Amount`]: 1,
+        [`payment${id}Details`]: 1,
+      },
+    };
+    try {
+      await axiosPublic.patch(`/members/${member._id}`, updates);
+      toast.success(`Payment ${id} deleted`);
+      refetch();
+    } catch {
+      toast.error("Failed to delete payment");
+    }
+  };
 
   return (
     <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/50 p-2 overflow-y-auto">
       <div className="flex flex-col gap-4 bg-white p-4 rounded-lg w-full max-w-5xl">
         <h3 className="font-bold text-lg">Details for {member.name}</h3>
-        {/* <div className="flex gap-2">
-          <button
-            className="btn-outline btn btn-sm"
-            onClick={async () => {
-              if (isMobile) {
-                // Mobile → generate + open externally
-                const blob = await pdf(MyPDFDoc).toBlob();
-                const url = URL.createObjectURL(blob);
-                window.open(url); // opens in Google Drive, Adobe, etc.
-              } else {
-                // Desktop → show preview modal
-                setShowPDFPreview(true);
-              }
-            }}
-          >
-            <FaFilePdf className="mr-1" /> Export PDF
-          </button>
 
-          <button
-            className="btn btn-secondary btn-sm"
-            onClick={() => {
-              if (isMobile) {
-                // 📱 Mobile → skip preview, directly export & open
-                exportExcel(product.logs, product.name);
-              } else {
-                // 💻 Desktop → show preview modal
-                setShowExcelPreview(true);
-              }
-            }}
-          >
-            <FaFileExcel /> Excel
-          </button>
-        </div> */}
-        <div className="flex justify-end">
+        {/* Buttons */}
+        <div className="flex justify-end gap-2">
           <button
             className="btn-outline btn btn-sm"
             onClick={() =>
@@ -264,7 +200,6 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
           >
             Preview / Export PDF
           </button>
-
           <button className="btn-outline btn btn-sm" onClick={prepareExcel}>
             Preview / Export Excel
           </button>
@@ -352,17 +287,45 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
           </table>
         </div>
 
-        {/* Buttons */}
-        <div className="flex flex-wrap justify-between gap-2 mt-4">
-          <button className="btn btn-sm" onClick={handleAdd}>
+        {/* Add / Save / Close */}
+        <div className="flex justify-between gap-2 mt-4">
+          <button
+            className="btn btn-sm"
+            onClick={() => {
+              const newId = installments.length
+                ? Number(installments[installments.length - 1].id) + 1
+                : 1;
+              setInstallments([
+                ...installments,
+                { id: newId, date: "", amount: 0, details: "" },
+              ]);
+            }}
+          >
             + Add Installment
           </button>
-
           <div>
-            <button className="btn-outline btn" onClick={onClose}>
+            <button className="mr-2 btn-outline btn" onClick={onClose}>
               Close
             </button>
-            <button className="btn btn-primary" onClick={handleSave}>
+            <button
+              className="btn btn-primary"
+              onClick={async () => {
+                const updates = {};
+                installments.forEach((inst) => {
+                  updates[`payment${inst.id}Date`] = inst.date;
+                  updates[`payment${inst.id}Amount`] = inst.amount;
+                  updates[`payment${inst.id}Details`] = inst.details;
+                });
+                try {
+                  await axiosPublic.patch(`/members/${member._id}`, updates);
+                  toast.success("Installments updated");
+                  refetch();
+                  onClose();
+                } catch {
+                  toast.error("Failed to update");
+                }
+              }}
+            >
               Save
             </button>
           </div>
@@ -371,21 +334,16 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
         {/* PDF Preview Modal */}
         {showPDFPreview && !isMobile && (
           <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
-            <div className="relative bg-white p-2 rounded-lg w-full h-[90vh]">
+            <div className="relative bg-white rounded-lg w-full h-[90vh]">
               <PDFViewer width="100%" height="100%">
-                <PDFDocument
-                  member={member}
-                  installments={installments}
-                  getCumulativeTotal={getCumulativeTotal}
-                  totalPayment={totalPayment}
-                />
+                <PDFDocument />
               </PDFViewer>
               <div className="right-4 bottom-4 absolute flex gap-2">
                 <button className="btn btn-primary" onClick={handleDownloadPDF}>
                   Download PDF
                 </button>
                 <button
-                  className="btn-active btn"
+                  className="btn-outline btn"
                   onClick={() => setShowPDFPreview(false)}
                 >
                   Close
