@@ -19,6 +19,7 @@ import {
   StyleSheet,
   Font,
   pdf,
+  PDFViewer,
 } from "@react-pdf/renderer";
 
 const ITEMS_PER_PAGE = 10;
@@ -217,6 +218,8 @@ const ProductDetails = () => {
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, `${productName}-stock-logs.xlsx`);
   };
+const [showPDFPreview, setShowPDFPreview] = useState(false);
+const [showExcelPreview, setShowExcelPreview] = useState(false);
 
   return (
     <div className="space-y-4 md:p-4">
@@ -305,6 +308,22 @@ const ProductDetails = () => {
         <div className="flex gap-2">
           <button
             className="btn btn-primary btn-sm"
+            onClick={() => setShowPDFPreview(true)}
+          >
+            <FaFilePdf /> PDF
+          </button>
+
+          <button
+            className="btn btn-secondary btn-sm"
+            onClick={() => setShowExcelPreview(true)}
+          >
+            <FaFileExcel /> Excel
+          </button>
+        </div>
+
+        {/* <div className="flex gap-2">
+          <button
+            className="btn btn-primary btn-sm"
             onClick={() => exportPDF(product.logs, product.name)}
           >
             <FaFilePdf /> PDF
@@ -316,7 +335,7 @@ const ProductDetails = () => {
           >
             <FaFileExcel /> Excel
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Add new log */}
@@ -530,6 +549,77 @@ const ProductDetails = () => {
           </tbody>
         </table>
       </div>
+      {/* 🔹 PDF Preview Modal */}
+      {showPDFPreview && (
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
+          <div className="relative bg-white shadow-lg rounded-lg w-full h-[90vh]">
+            <PDFViewer width="100%" height="100%">
+              <PDFDocument logs={product.logs} productName={product.name} />
+            </PDFViewer>
+            <div className="right-3 bottom-3 absolute flex gap-2">
+              <button className="btn" onClick={() => setShowPDFPreview(false)}>
+                Close
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => exportPDF(product.logs, product.name)}
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🔹 Excel Preview Modal */}
+      {showExcelPreview && (
+        <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
+          <div className="relative bg-white shadow-lg p-4 rounded-lg w-full max-w-4xl h-[90vh] overflow-auto">
+            <h2 className="mb-4 font-bold text-lg">
+              {product.name} - Stock Logs (Excel Preview)
+            </h2>
+            <table className="table table-zebra border w-full text-sm">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="px-2 py-1 border">Date</th>
+                  <th className="px-2 py-1 border">Type</th>
+                  <th className="px-2 py-1 border">Quantity</th>
+                  <th className="px-2 py-1 border">Remarks</th>
+                  <th className="px-2 py-1 border">Stock</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(product.logs || []).map((log, i) => (
+                  <tr key={i}>
+                    <td className="px-2 py-1 border">
+                      {log.date ? new Date(log.date).toLocaleDateString() : "-"}
+                    </td>
+                    <td className="px-2 py-1 border">{log.type}</td>
+                    <td className="px-2 py-1 border">{log.quantity}</td>
+                    <td className="px-2 py-1 border">{log.remarks || "-"}</td>
+                    <td className="px-2 py-1 border">{log.balance ?? "-"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="right-3 bottom-3 absolute flex gap-2">
+              <button
+                className="btn"
+                onClick={() => setShowExcelPreview(false)}
+              >
+                Close
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={() => exportExcel(product.logs, product.name)}
+              >
+                Download
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

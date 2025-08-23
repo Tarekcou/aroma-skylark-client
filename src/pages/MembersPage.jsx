@@ -241,6 +241,7 @@ const MembersPage = () => {
           </button>
         </div>
       </div>
+
       {/* Members Table */}
       <div className="bg-white shadow rounded overflow-x-auto">
         <table className="table table-zebra w-full">
@@ -269,7 +270,7 @@ const MembersPage = () => {
                     {totalPaid || 0}
                   </td>
                   <td className="font-semibold text-red-600">{due}</td>
-                  <td>
+                  <td className="flex">
                     <button
                       className="btn-outline btn btn-sm"
                       onClick={() => setModalData(m)}
@@ -289,6 +290,7 @@ const MembersPage = () => {
           </tbody>
         </table>
       </div>
+
       {/* Excel Preview Modal */}
       {showExcelPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 p-4">
@@ -297,36 +299,25 @@ const MembersPage = () => {
             <table className="border w-full text-sm border-collapse table-auto">
               <thead>
                 <tr className="bg-gray-100">
-                  <th className="px-2 py-1 border">SL</th>
-                  <th className="px-2 py-1 border">Name</th>
-                  <th className="px-2 py-1 border">Phone</th>
-                  <th className="px-2 py-1 border">Subscription</th>
-                  <th className="px-2 py-1 border">Total Paid</th>
-                  <th className="px-2 py-1 border">Ind. Due</th>
+                  {Object.keys(members[0]).map((key) => (
+                    <th key={key} className="px-2 py-1 border">
+                      {key}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {members.map((m, i) => {
-                  const totalPaid = calculateTotalPaid(m);
-                  const due = calculateDue(m);
-                  return (
-                    <tr key={m._id}>
-                      <td className="px-2 py-1 border">{i + 1}</td>
-                      <td className="px-2 py-1 border">{m.name}</td>
-                      <td className="px-2 py-1 border">{m.phone}</td>
-                      <td className="px-2 py-1 border">{m.subscription}</td>
-                      <td className="px-2 py-1 border font-semibold text-green-600">
-                        {totalPaid || 0}
+                {members.map((m, idx) => (
+                  <tr key={idx}>
+                    {Object.values(m).map((val, i) => (
+                      <td key={i} className="px-2 py-1 border">
+                        {val}
                       </td>
-                      <td className="px-2 py-1 border font-semibold text-red-600">
-                        {due}
-                      </td>
-                    </tr>
-                  );
-                })}
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
-
             <div className="flex justify-end gap-2 mt-4">
               <button
                 className="btn-outline btn"
@@ -341,56 +332,29 @@ const MembersPage = () => {
           </div>
         </div>
       )}
+
       {/* PDF Preview Modal */}
       {showPDFPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
-          <div className="relative bg-white p-2 rounded-lg w-full h-[90vh]">
-            {/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? (
-              <div className="flex flex-col justify-center items-center gap-4 h-full">
-                <p className="text-center">
-                  PDF preview is not supported on mobile.
-                </p>
-                <button
-                  className="btn btn-primary"
-                  onClick={async () => {
-                    const blob = await pdf(
-                      <MyDocument
-                        members={members}
-                        formattedDate={formattedDate}
-                        calculateTotalPaid={calculateTotalPaid}
-                        calculateDue={calculateDue}
-                      />
-                    ).toBlob();
-                    const url = URL.createObjectURL(blob);
-                    window.open(url, "_blank");
-                  }}
-                >
-                  Open PDF
-                </button>
-              </div>
-            ) : (
-              <PDFViewer width="100%" height="100%">
-                <MyDocument
-                  members={members}
-                  formattedDate={formattedDate}
-                  calculateTotalPaid={calculateTotalPaid}
-                  calculateDue={calculateDue}
-                />
-              </PDFViewer>
-            )}
-
-            <div className="right-4 bottom-4 absolute flex gap-2">
+          <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
+            <PDFViewer width="100%" height="100%">
+              <MyDocument
+                members={members}
+                formattedDate={formattedDate}
+                calculateTotalPaid={calculateTotalPaid}
+                calculateDue={calculateDue}
+              />
+            </PDFViewer>
+            <div className="right-10 bottom-10 absolute flex justify-end gap-2">
               <button
                 className="btn-active btn"
                 onClick={() => setShowPDFPreview(false)}
               >
                 Close
               </button>
-              {!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent) && (
-                <button className="btn btn-primary" onClick={handleDownloadPDF}>
-                  Download
-                </button>
-              )}
+              <button className="btn btn-primary" onClick={handleDownloadPDF}>
+                Download
+              </button>
             </div>
           </div>
         </div>
