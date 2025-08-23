@@ -1,23 +1,27 @@
 import React from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import axiosPublic from "../axios/AxiosPublic";
+import axiosPublic from "../../axios/AxiosPublic";
 import toast from "react-hot-toast";
 
 const MemberModal = ({ data, closeModal }) => {
+    const DEFAULT_SUBSCRIPTION = 300000;
+
   const {
     register,
     handleSubmit,
-    reset,
     formState: { isSubmitting },
   } = useForm({
-    defaultValues: data || {
-      name: "",
-      phone: "",
-      email: "",
-      subscription: "",
+    defaultValues: {
+      name: data?.name ?? "",
+      phone: data?.phone ?? "",
+      email: data?.email ?? "",
+      subscription: Number.isFinite(Number(data?.subscription))
+        ? Number(data.subscription)
+        : DEFAULT_SUBSCRIPTION, // <- same default as above
     },
   });
+  
 
   const queryClient = useQueryClient();
 
@@ -66,9 +70,9 @@ const onSubmit = (formData) => {
             className="input-bordered w-full input"
           /> */}
           <input
-            {...register("subscription")}
+            type="number"
+            {...register("subscription", { valueAsNumber: true })}
             placeholder="Subscription Amount"
-            defaultValue={350000}
             className="input-bordered w-full input"
           />
           <div className="flex justify-between">

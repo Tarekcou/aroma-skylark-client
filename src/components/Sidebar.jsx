@@ -57,20 +57,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <FaUsers />
             <h1 >Members</h1>
           </NavLink>
-          <NavLink to="/dashboard/installment" className="flex items-center space-x-2">
-            <span className="text-green-500"><FaPlus /></span>
-            <h1 >Installment</h1>
-          </NavLink>
-          {/* <NavLink to={"/settings"} className="flex items-center space-x-2">
-            <FaCog />
-            <span> Settings</span>
-          </NavLink> */}
-
-          {/* <div className="mt-4 font-semibold text-gray-500 text-sm">Others</div>
-          <div className="flex items-center space-x-2">
-            <FaQuestionCircle />
-            <span>Help & Support</span>
-          </div> */}
+        
         </nav>
       </aside>
     </div>

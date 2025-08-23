@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import axiosPublic from "../axios/AxiosPublic";
-import TransactionFormModal from "./TransactionFormModal";
-import TransactionListTable from "./TransactionListTable";
+import axiosPublic from "../../axios/AxiosPublic";
+import TransactionFormModal from "../transactions/TransactionFormModal";
+import TransactionListTable from "../transactions/TransactionListTable";
 
 const CategoryTransactions = () => {
   const { categoryName } = useParams();

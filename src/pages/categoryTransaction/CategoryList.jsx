@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
-import { useBook } from "../context/BookContext";
-import axiosPublic from "../axios/AxiosPublic";
+import { useBook } from "../../context/BookContext";
+import axiosPublic from "../../axios/AxiosPublic";
 
 const CategoryList = () => {
   const { setBookName } = useBook();

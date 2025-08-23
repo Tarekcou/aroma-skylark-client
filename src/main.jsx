@@ -5,28 +5,25 @@ import App from './App.jsx'
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 import { createBrowserRouter, RouterProvider } from "react-router";
-import StartPage from './pages/LoginPage.jsx';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
-import BookDetails from './components/BookDetails.jsx';
 import NotFound from './components/NotFound.jsx';
 // import TransactionForm from './components/TransactionForm.jsx';
 import { BookProvider } from './context/BookContext.jsx';
 import PrivateRoute from './routes/PrivateRoute.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
-import MembersPage from './pages/MembersPage.jsx';
-import Installment from './components/Installment.jsx';
-import CategoryList from './components/CategoryList.jsx';
-import CategoryTransactions from './components/CategoryTransactions.jsx';
-import CategoryLayout from './components/CategoryLayout.jsx';
+import CategoryList from './pages/categoryTransaction/CategoryList.jsx';
+import CategoryTransactions from './pages/categoryTransaction/CategoryTransactions.jsx';
+import CategoryLayout from './pages/categoryTransaction/CategoryLayout.jsx';
 import MainLayout from './layout/MainLayout.jsx';
-import AllTransactions from './components/AllTransactions.jsx';
 import ProductList from './pages/product/ProductList.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import LoginPage from './pages/LoginPage.jsx';
-import TransactionListTable from './components/TransactionListTable.jsx';
+
 import HomeLayout from './layout/HomeLayout.jsx';
 import ProductDetails from './pages/product/ProductDetails.jsx';
+import AllTransactions from './pages/transactions/AllTransactions.jsx';
+import MembersPage from './pages/members/MembersPage.jsx';
 
 
 const queryClient = new QueryClient();
@@ -68,7 +65,6 @@ const router = createBrowserRouter([
         ],
       },
       { path: "members", element: <MembersPage /> },
-      { path: "installment", element: <Installment /> },
       {
         path: "products",
         element: <ProductList />,

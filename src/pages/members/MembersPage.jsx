@@ -1,7 +1,6 @@
 // ✅ MembersPage.jsx
 import React, { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import axiosPublic from "../axios/AxiosPublic";
 import toast from "react-hot-toast";
 import MemberModal from "./MemberModal";
 import Swal from "sweetalert2";
@@ -19,6 +18,8 @@ import {
   pdf,
   PDFViewer,
 } from "@react-pdf/renderer";
+import MemberDetailsModal from "./MembersDetailsModal";
+import axiosPublic from "../../axios/AxiosPublic";
 
 // 🔹 Register Bangla font once
 Font.register({
@@ -77,6 +78,7 @@ const MyDocument = ({
   formattedDate,
   calculateTotalPaid,
   calculateDue,
+  getSubscription,
 }) => (
   <Document>
     <Page size="A4" orientation="landscape" style={styles.page}>
@@ -84,38 +86,49 @@ const MyDocument = ({
       <Text style={styles.subHeader}>Date: {formattedDate}</Text>
 
       <View style={styles.table}>
-        {/* Header Row */}
         <View style={styles.row}>
-          {headers.map((h, i) => (
+          {[
+            "#",
+            "Date",
+            "Name",
+            "Phone",
+            "Subscription",
+            "Total Paid",
+            "Due",
+          ].map((h, i) => (
             <Text
               key={i}
-              style={[styles.cell, styles.headerCell, { width: colWidth }]}
+              style={[styles.cell, styles.headerCell, { width: `${100 / 7}%` }]}
             >
               {h}
             </Text>
           ))}
         </View>
 
-        {/* Body Rows */}
         {members.map((m, idx) => {
           const totalPaid = calculateTotalPaid(m);
           const due = calculateDue(m);
-
           return (
-            <View key={idx} style={styles.row}>
-              <Text style={[styles.cell, { width: colWidth }]}>{idx + 1}</Text>
-              <Text style={[styles.cell, { width: colWidth }]}>
+            <View key={m._id || idx} style={styles.row}>
+              <Text style={[styles.cell, { width: `${100 / 7}%` }]}>
+                {idx + 1}
+              </Text>
+              <Text style={[styles.cell, { width: `${100 / 7}%` }]}>
                 {formattedDate}
               </Text>
-              <Text style={[styles.cell, { width: colWidth }]}>{m.name}</Text>
-              <Text style={[styles.cell, { width: colWidth }]}>{m.phone}</Text>
-              <Text style={[styles.cell, { width: colWidth }]}>
-                {m.subscription || 0}
+              <Text style={[styles.cell, { width: `${100 / 7}%` }]}>
+                {m.name}
               </Text>
-              <Text style={[styles.cell, { width: colWidth }]}>
-                {totalPaid || 0}
+              <Text style={[styles.cell, { width: `${100 / 7}%` }]}>
+                {m.phone}
               </Text>
-              <Text style={[styles.cell, { width: colWidth }]}>{due || 0}</Text>
+              <Text style={[styles.cell, { width: `${100 / 7}%` }]}>
+                {getSubscription(m)}
+              </Text>
+              <Text style={[styles.cell, { width: `${100 / 7}%` }]}>
+                {totalPaid}
+              </Text>
+              <Text style={[styles.cell, { width: `${100 / 7}%` }]}>{due}</Text>
             </View>
           );
         })}
@@ -123,6 +136,7 @@ const MyDocument = ({
     </Page>
   </Document>
 );
+
 
 const MembersPage = () => {
   const [modalData, setModalData] = useState(null);
@@ -134,23 +148,28 @@ const MembersPage = () => {
     queryKey: ["members"],
     queryFn: async () => (await axiosPublic.get("/members")).data.members || [],
   });
+  // ---- helpers: use member subscription (fallback), coerce numbers safely
+  const DEFAULT_SUBSCRIPTION = 300000;
 
-  const defaultSubscription = 300000;
-  const calculateTotalPaid = (member) =>
-    Object.keys(member)
-      .filter((k) => k.startsWith("payment") && k.endsWith("Amount"))
-      .reduce((sum, k) => sum + (member[k] || 0), 0);
+  const getSubscription = (m) => {
+    const raw = m?.subscription ?? DEFAULT_SUBSCRIPTION;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : 0;
+  };
 
-  const calculateDue = (member) =>
-    defaultSubscription - calculateTotalPaid(member);
+  const getAllPaymentAmounts = (m) =>
+    Object.entries(m || {})
+      .filter(([k]) => k.startsWith("payment") && k.endsWith("Amount"))
+      .map(([, v]) => Number(v) || 0);
 
-  const deleteMutation = useMutation({
-    mutationFn: async (id) => await axiosPublic.delete(`/members/${id}`),
-    onSuccess: () => {
-      toast.success("Member deleted");
-      queryClient.invalidateQueries(["members"]);
-    },
-  });
+  const calculateTotalPaid = (m) =>
+    getAllPaymentAmounts(m).reduce((sum, x) => sum + x, 0);
+
+  const calculateDue = (m) => {
+    const due = getSubscription(m) - calculateTotalPaid(m);
+    // clamp at 0 if you don’t want negative dues; remove Math.max if you want to show overpayment
+    return Math.max(0, due);
+  };
 
   const handleDelete = async (id) => {
     const result = await Swal.fire({
@@ -162,40 +181,56 @@ const MembersPage = () => {
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
     });
-    if (result.isConfirmed) deleteMutation.mutate(id);
+
+    if (result.isConfirmed) {
+      try {
+        // API request to delete
+        const res = await axiosPublic.delete(`/members/${id}`);
+
+        if (res.status === 200) {
+          // Remove the deleted member from frontend state
+          refetch();
+          toast.success("Member deleted successfully");
+        } else {
+          toast.error("Failed to delete member");
+        }
+      } catch (err) {
+        toast.error("Failed to delete member");
+        console.error(err);
+      }
+    }
   };
 
- const handleDownloadExcel = () => {
-   if (members.length === 0) return toast.error("No members to export");
+  // Build Excel rows (same structure for preview + download)
+  const buildExcelRows = () => {
+    return members.map((m, i) => ({
+      SL: i + 1,
+      Name: m.name,
+      Phone: m.phone,
+      Subscription: getSubscription(m),
+      "Total Paid": calculateTotalPaid(m),
+      "Ind. Due": calculateDue(m),
+    }));
+  };
 
-   // Build rows just like your table
-   const rows = members.map((m, i) => {
-     const totalPaid = calculateTotalPaid(m);
-     const due = calculateDue(m);
-     return {
-       SL: i + 1,
-       Name: m.name,
-       Phone: m.phone,
-       Subscription: m.subscription,
-       "Total Paid": totalPaid || 0,
-       "Ind. Due": due,
-     };
-   });
+  const handleDownloadExcel = () => {
+    if (members.length === 0) return toast.error("No members to export");
 
-   // Convert rows -> sheet
-   const worksheet = XLSX.utils.json_to_sheet(rows);
-   const workbook = XLSX.utils.book_new();
-   XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
-   const excelBuffer = XLSX.write(workbook, {
-     bookType: "xlsx",
-     type: "array",
-   });
+    const rows = buildExcelRows();
 
-   saveAs(
-     new Blob([excelBuffer], { type: "application/octet-stream" }),
-     "members.xlsx"
-   );
- };
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+
+    saveAs(
+      new Blob([excelBuffer], { type: "application/octet-stream" }),
+      "members.xlsx"
+    );
+  };
 
   const formattedDate = new Date()
     .toLocaleDateString("en-GB")
@@ -214,9 +249,10 @@ const MembersPage = () => {
     ).toBlob();
     saveAs(blob, `members_${formattedDate}.pdf`);
   };
+  const [selectedMember, setSelectedMember] = useState(null);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-x-auto">
       {/* Header + Buttons */}
       <div className="flex justify-between items-center">
         <h2 className="font-bold text-xl">👥 Members</h2>
@@ -241,9 +277,7 @@ const MembersPage = () => {
           </button>
         </div>
       </div>
-
-      {/* Members Table */}
-      <div className="bg-white shadow rounded overflow-x-auto">
+      <div className="overflow-x-auto">
         <table className="table table-zebra w-full">
           <thead>
             <tr className="bg-base-200">
@@ -251,55 +285,63 @@ const MembersPage = () => {
               <th>Name</th>
               <th>Phone</th>
               <th>Subscription</th>
-              <th>Total Pmt</th>
-              <th>Ind. Due</th>
-              <th>Actions</th>
+              <th>Total Paid</th>
+              <th>Due</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {members.map((m, i) => {
-              const totalPaid = calculateTotalPaid(m);
-              const due = calculateDue(m);
-              return (
-                <tr key={m._id}>
-                  <td>{i + 1}</td>
-                  <td>{m.name}</td>
-                  <td>{m.phone}</td>
-                  <td>{m.subscription}</td>
-                  <td className="font-semibold text-green-600">
-                    {totalPaid || 0}
-                  </td>
-                  <td className="font-semibold text-red-600">{due}</td>
-                  <td className="flex">
-                    <button
-                      className="btn-outline btn btn-sm"
-                      onClick={() => setModalData(m)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      className="ml-2 btn btn-error btn-sm"
-                      onClick={() => handleDelete(m._id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {members.map((m, idx) => (
+              <tr
+                key={m._id}
+                className="hover:bg-gray-100 cursor-pointer"
+                onClick={() => setSelectedMember(m)}
+              >
+                <td>{idx + 1}</td>
+                <td>{m.name}</td>
+                <td>{m.phone}</td>
+                <td>{getSubscription(m)}</td>
+                <td className="font-semibold text-green-600">
+                  {calculateTotalPaid(m)}
+                </td>
+                <td className="font-semibold text-red-600">
+                  {calculateDue(m)}
+                </td>
+
+                <td className="flex">
+                  <button
+                    className="btn-outline btn btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setModalData(m);
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="ml-2 btn btn-error btn-sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(m._id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
-
       {/* Excel Preview Modal */}
       {showExcelPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/60 p-4">
-          <div className="bg-white p-6 rounded-lg w-full h-full overflow-auto">
+          <div className="bg-white p-6 rounded-lg w-full h-[90vh] overflow-auto">
             <h2 className="mb-4 font-bold text-lg">📊 Excel Preview</h2>
             <table className="border w-full text-sm border-collapse table-auto">
               <thead>
                 <tr className="bg-gray-100">
-                  {Object.keys(members[0]).map((key) => (
+                  {Object.keys(buildExcelRows()[0]).map((key) => (
                     <th key={key} className="px-2 py-1 border">
                       {key}
                     </th>
@@ -307,9 +349,9 @@ const MembersPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {members.map((m, idx) => (
+                {buildExcelRows().map((row, idx) => (
                   <tr key={idx}>
-                    {Object.values(m).map((val, i) => (
+                    {Object.values(row).map((val, i) => (
                       <td key={i} className="px-2 py-1 border">
                         {val}
                       </td>
@@ -320,7 +362,7 @@ const MembersPage = () => {
             </table>
             <div className="flex justify-end gap-2 mt-4">
               <button
-                className="btn-outline btn"
+                className="btn-active btn"
                 onClick={() => setShowExcelPreview(false)}
               >
                 Close
@@ -332,7 +374,6 @@ const MembersPage = () => {
           </div>
         </div>
       )}
-
       {/* PDF Preview Modal */}
       {showPDFPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
@@ -343,6 +384,7 @@ const MembersPage = () => {
                 formattedDate={formattedDate}
                 calculateTotalPaid={calculateTotalPaid}
                 calculateDue={calculateDue}
+                getSubscription={getSubscription}
               />
             </PDFViewer>
             <div className="right-10 bottom-10 absolute flex justify-end gap-2">
@@ -359,10 +401,20 @@ const MembersPage = () => {
           </div>
         </div>
       )}
-
       {/* Modal */}
       {modalData && (
-        <MemberModal data={modalData} closeModal={() => setModalData(null)} />
+        <MemberModal
+          data={modalData}
+          closeModal={() => setModalData(null)}
+          refetch={refetch}
+        />
+      )}
+      {selectedMember && (
+        <MemberDetailsModal
+          member={selectedMember}
+          onClose={() => setSelectedMember(null)}
+          refetch={refetch}
+        />
       )}
     </div>
   );

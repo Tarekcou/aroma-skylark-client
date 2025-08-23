@@ -1,15 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { useContext, useState } from "react";
 import { FaPlus, FaMinus, FaEquals } from "react-icons/fa";
-import TransactionFormModal from "./TransactionFormModal";
-import CategoryList from "./CategoryList";
-import axiosPublic from "../axios/AxiosPublic";
+import CategoryList from "../categoryTransaction/CategoryList";
+import axiosPublic from "../../axios/AxiosPublic";
 import { Link, Outlet, useLocation, useParams } from "react-router";
-import SummaryCard from "./SummaryCard";
-import TransactionListTable from "./TransactionListTable";
-import { useAuth } from "../context/AuthContext";
+import SummaryCard from "../../components/SummaryCard";
+import { useAuth } from "../../context/AuthContext";
 import { BiPencil } from "react-icons/bi";
 import { MdAdd } from "react-icons/md";
+import TransactionFormModal from "./TransactionFormModal";
+import TransactionListTable from "./TransactionListTable";
 
 const AllTransactions = () => {
   const [modalOpen, setModalOpen] = useState(false);
