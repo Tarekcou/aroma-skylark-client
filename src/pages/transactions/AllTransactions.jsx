@@ -85,12 +85,14 @@ const totalInstallmentCashIn = members.reduce(
       {entries.length > 0 && (
         <TransactionListTable entries={entries} refetch={refetch} />
       )}
+              {isAuthenticated && (
+
       <button
         className="md:hidden bottom-2 flex justify-center mx-auto mt-20 text-center btn btn-primary btn-sm"
         onClick={() => setModalOpen(true)}
       >
         <MdAdd className="text-xl" /> Add Transaction
-      </button>
+      </button>)}
 
       {/* Transaction Modal */}
       {modalOpen && (
