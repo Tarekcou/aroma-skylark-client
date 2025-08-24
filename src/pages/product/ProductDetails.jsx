@@ -184,10 +184,16 @@ const ProductDetails = () => {
     return blob;
   };
 
-  const handleOpenInBrowser = async () => {
-    if (!pdfBlobUrl) await generatePDFBlob();
-    window.open(pdfBlobUrl, "_blank");
-  };
+ const handleOpenInBrowser = async () => {
+   let url = pdfBlobUrl;
+   if (!url) {
+     const blob = pdfBlob || (await generatePDFBlob());
+     url = URL.createObjectURL(blob);
+     setPdfBlobUrl(url);
+   }
+   window.open(url, "_blank");
+ };
+
 
   const handleDownloadPDF = async () => {
     const blob = pdfBlob || (await generatePDFBlob());
@@ -409,7 +415,7 @@ const ProductDetails = () => {
               <th>Type</th>
               <th>Qty</th>
               <th>Remarks</th>
-              <th>Stock</th> {/* <-- running balance after this txn */}
+              <th>Stock</th> 
               <th>Actions</th>
             </tr>
           </thead>

@@ -176,6 +176,7 @@ const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
   // PDF Download
   const handleDownloadPDF = async () => {
     if (!members.length) return toast.error("No members to export");
+
     let blob;
     if (!pdfBlobUrl) {
       blob = await pdf(
@@ -191,9 +192,11 @@ const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
     } else {
       blob = await fetch(pdfBlobUrl).then((res) => res.blob());
     }
+
     saveAs(blob, `members_${formattedDate}.pdf`);
     setShowPDFPreview(false);
   };
+
 
 
   // Excel Build & Download
@@ -208,24 +211,28 @@ const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
     }));
     const handleOpenInBrowser = async () => {
       if (!members.length) return toast.error("No members to export");
-      if (!pdfBlobUrl) {
-        const blob = await pdf(
-          <MyPDFDoc
-            members={members}
-            formattedDate={formattedDate}
-            calculateTotalPaid={calculateTotalPaid}
-            calculateDue={calculateDue}
-            getSubscription={getSubscription}
-          />
-        ).toBlob();
-        const url = URL.createObjectURL(blob);
-        setPdfBlobUrl(url);
-        window.open(url, "_blank");
-      } else {
-        window.open(pdfBlobUrl, "_blank");
-      }
+
+      // Generate PDF blob
+      const blob = await pdf(
+        <MyPDFDoc
+          members={members}
+          formattedDate={formattedDate}
+          calculateTotalPaid={calculateTotalPaid}
+          calculateDue={calculateDue}
+          getSubscription={getSubscription}
+        />
+      ).toBlob();
+
+      // Create URL and open in new tab
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank");
+
+      // Optionally save URL for reuse
+      setPdfBlobUrl(url);
+
       setShowPDFPreview(false);
     };
+
 
 
   const handleDownloadExcel = () => {

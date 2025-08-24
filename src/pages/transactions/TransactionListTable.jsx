@@ -313,10 +313,16 @@ const TransactionListTable = ({ entries = [], refetch }) => {
   // Open PDF in browser tab (mobile)
 
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  
   const handleOpenInBrowser = async () => {
-    if (!pdfBlobUrl) await generatePDFBlob(); // uses filteredEntries
-    window.open(pdfBlobUrl, "_blank");
+    const blob = pdfBlob || (await generatePDFBlob());
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+
+    // Optionally save to state for later reuse
+    setPdfBlobUrl(url);
   };
+
 
   const handleDownloadPDF = async () => {
     const blob = pdfBlob || (await generatePDFBlob());

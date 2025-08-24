@@ -171,6 +171,8 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
   //   }
   //   setShowPDFModal(false);
   // };
+  
+
   const handleOpenInBrowser = async () => {
     if (!pdfBlobUrl) {
       const blob = await pdf(PDFDocument()).toBlob();
