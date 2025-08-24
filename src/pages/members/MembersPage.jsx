@@ -121,6 +121,7 @@ const MembersPage = () => {
   const [selectedMember, setSelectedMember] = useState(null);
   const [showExcelPreview, setShowExcelPreview] = useState(false);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
+const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
 
   const queryClient = useQueryClient();
   const { refetch, data: members = [] } = useQuery({
@@ -175,17 +176,25 @@ const MembersPage = () => {
   // PDF Download
   const handleDownloadPDF = async () => {
     if (!members.length) return toast.error("No members to export");
-    const blob = await pdf(
-      <MyPDFDoc
-        members={members}
-        formattedDate={formattedDate}
-        calculateTotalPaid={calculateTotalPaid}
-        calculateDue={calculateDue}
-        getSubscription={getSubscription}
-      />
-    ).toBlob();
+    let blob;
+    if (!pdfBlobUrl) {
+      blob = await pdf(
+        <MyPDFDoc
+          members={members}
+          formattedDate={formattedDate}
+          calculateTotalPaid={calculateTotalPaid}
+          calculateDue={calculateDue}
+          getSubscription={getSubscription}
+        />
+      ).toBlob();
+      setPdfBlobUrl(URL.createObjectURL(blob));
+    } else {
+      blob = await fetch(pdfBlobUrl).then((res) => res.blob());
+    }
     saveAs(blob, `members_${formattedDate}.pdf`);
+    setShowPDFPreview(false);
   };
+
 
   // Excel Build & Download
   const buildExcelRows = () =>
@@ -197,6 +206,27 @@ const MembersPage = () => {
       "Total Paid": calculateTotalPaid(m),
       "Ind. Due": calculateDue(m),
     }));
+    const handleOpenInBrowser = async () => {
+      if (!members.length) return toast.error("No members to export");
+      if (!pdfBlobUrl) {
+        const blob = await pdf(
+          <MyPDFDoc
+            members={members}
+            formattedDate={formattedDate}
+            calculateTotalPaid={calculateTotalPaid}
+            calculateDue={calculateDue}
+            getSubscription={getSubscription}
+          />
+        ).toBlob();
+        const url = URL.createObjectURL(blob);
+        setPdfBlobUrl(url);
+        window.open(url, "_blank");
+      } else {
+        window.open(pdfBlobUrl, "_blank");
+      }
+      setShowPDFPreview(false);
+    };
+
 
   const handleDownloadExcel = () => {
     if (!members.length) return toast.error("No members to export");
@@ -223,21 +253,11 @@ const MembersPage = () => {
           {/* PDF */}
           <button
             className="btn-outline btn btn-sm"
-            onClick={async () => {
+            onClick={() => {
               if (isMobile) {
-                const blob = await pdf(
-                  <MyPDFDoc
-                    members={members}
-                    formattedDate={formattedDate}
-                    calculateTotalPaid={calculateTotalPaid}
-                    calculateDue={calculateDue}
-                    getSubscription={getSubscription}
-                  />
-                ).toBlob();
-                const url = URL.createObjectURL(blob);
-                window.open(url); // open in mobile app
+                setShowPDFPreview(true); // open modal with options
               } else {
-                setShowPDFPreview(true); // Desktop preview modal
+                setShowPDFPreview(true); // desktop preview modal
               }
             }}
           >
@@ -364,27 +384,44 @@ const MembersPage = () => {
       )}
 
       {/* PDF Preview Modal */}
-      {showPDFPreview && !isMobile && (
+      {/* PDF Preview Modal */}
+      {showPDFPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
-          <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
-            <PDFViewer width="100%" height="100%">
-              <MyPDFDoc
-                members={members}
-                formattedDate={formattedDate}
-                calculateTotalPaid={calculateTotalPaid}
-                calculateDue={calculateDue}
-                getSubscription={getSubscription}
-              />
-            </PDFViewer>
-            <div className="right-10 bottom-10 absolute flex justify-end gap-2">
+          <div className="relative flex flex-col bg-white p-4 rounded-lg w-full max-w-5xl h-[90vh]">
+            <h3 className="mb-2 font-bold text-lg">📄 Members Report</h3>
+
+            {!isMobile ? (
+              <PDFViewer width="100%" height="100%">
+                <MyPDFDoc
+                  members={members}
+                  formattedDate={formattedDate}
+                  calculateTotalPaid={calculateTotalPaid}
+                  calculateDue={calculateDue}
+                  getSubscription={getSubscription}
+                />
+              </PDFViewer>
+            ) : (
+              <p className="flex-1 text-gray-600 text-sm">
+                On mobile, preview is not supported. Please choose{" "}
+                <b>Open in Browser Tab</b> or <b>Download PDF</b>.
+              </p>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-2 mt-4">
+              {isMobile && (
+                <button className="btn btn-info btn-sm" onClick={handleOpenInBrowser}>
+                  🌐 Open in Browser Tab
+                </button>
+              )}
+              <button className="btn btn-success btn-sm" onClick={handleDownloadPDF}>
+                📥 Download PDF
+              </button>
               <button
-                className="btn-active btn"
+                className="btn-outline btn btn-sm"
                 onClick={() => setShowPDFPreview(false)}
               >
                 Close
-              </button>
-              <button className="btn btn-primary" onClick={handleDownloadPDF}>
-                Download
               </button>
             </div>
           </div>

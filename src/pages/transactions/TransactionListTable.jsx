@@ -80,7 +80,9 @@ const TransactionListTable = ({ entries = [], refetch }) => {
   const [page, setPage] = useState(1);
   const [editEntry, setEditEntry] = useState(null);
   const { isAuthenticated } = useAuth();
-const [previewDoc, setPreviewDoc] = useState(null);
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [pdfBlob, setPdfBlob] = useState(null);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
 
   // 🔹 Unique filter options
   const categories = useMemo(
@@ -185,40 +187,35 @@ const [previewDoc, setPreviewDoc] = useState(null);
       toast.error("Failed to delete entry");
     }
   };
- 
+
   // 🔹 Compute running balance and expenses dynamically
- const entriesWithBalanceAndExpense = useMemo(() => {
-   // Total cash available from members
-   const totalInstallmentCashIn = members.reduce(
-     (sum, m) => sum + Number(m.installmentTotal || 0),
-     0
-   );
+  const entriesWithBalanceAndExpense = useMemo(() => {
+    // Total cash available from members
+    const totalInstallmentCashIn = members.reduce(
+      (sum, m) => sum + Number(m.installmentTotal || 0),
+      0
+    );
 
-   let runningBalance = totalInstallmentCashIn;
-   let runningExpenses = 0;
+    let runningBalance = totalInstallmentCashIn;
+    let runningExpenses = 0;
 
-   return filteredEntries.map((entry) => {
-     const amount = Number(entry.amount || 0);
+    return filteredEntries.map((entry) => {
+      const amount = Number(entry.amount || 0);
 
-     runningExpenses += amount; // cumulative expense
-     runningBalance -= amount; // subtract from balance
+      runningExpenses += amount; // cumulative expense
+      runningBalance -= amount; // subtract from balance
 
-     return {
-       ...entry,
-       balance: runningBalance,
-       expense: runningExpenses, // cumulative expense up to this row
-     };
-   });
- }, [filteredEntries, members]);
-
-
-
-
+      return {
+        ...entry,
+        balance: runningBalance,
+        expense: runningExpenses, // cumulative expense up to this row
+      };
+    });
+  }, [filteredEntries, members]);
 
   // 🔹 Total expense for footer
   const totalExpense = useMemo(() => {
-    return filteredEntries
-      .reduce((sum, e) => sum + (e.amount || 0), 0);
+    return filteredEntries.reduce((sum, e) => sum + (e.amount || 0), 0);
   }, [filteredEntries]);
 
   // 🔹 Use entriesWithBalanceAndExpense for table & pagination
@@ -228,84 +225,103 @@ const [previewDoc, setPreviewDoc] = useState(null);
   );
 
   // 🔹 Export PDF with @react-pdf/renderer
-
- // 🔹 PDF Doc
- const MyPDFDoc = (
-   <Document>
-     <Page size="A4" orientation="landscape" style={styles.page}>
-       <Text style={styles.header}>All Transactions</Text>
-       <Text>Date: {new Date().toLocaleDateString("en-GB")}</Text>
-
-       <View style={styles.table}>
-         {/* Header Row */}
-         <View style={styles.row}>
-           {[
-             "#",
-             "Date",
-             "Remarks",
-             "Category",
-             "Type",
-             "Division",
-             "Details",
-             "Pmt Mode",
-             "Expenses",
-             "Balance",
-           ].map((h, i) => (
-             <Text key={i} style={[styles.cell, styles.headerCell]}>
-               {h}
-             </Text>
-           ))}
-         </View>
-
-         {/* Body Rows */}
-         {paginatedEntries.map((e, i) => (
-           <View key={i} style={styles.row}>
-             <Text style={styles.cell}>
-               {(page - 1) * ITEMS_PER_PAGE + i + 1}
-             </Text>
-             <Text style={styles.cell}>
-               {new Date(e.date).toLocaleDateString("bn-BD")}
-             </Text>
-             <Text style={styles.cell}>{e.remarks || "-"}</Text>
-             <Text style={styles.cell}>{e.category || "-"}</Text>
-             <Text style={styles.cell}>{e.type || "-"}</Text>
-             <Text style={styles.cell}>{e.division || "-"}</Text>
-             <Text style={styles.cell}>{e.details || "-"}</Text>
-             <Text style={styles.cell}>{e.mode || "-"}</Text>
-             <Text style={styles.cell}>{e.amount || "-"}</Text>
-             <Text style={styles.cell}>{e.expense || "-"}</Text>
-           </View>
-         ))}
-
-         {/* Footer */}
-         <View style={styles.row}>
-           <Text style={styles.cell}></Text>
-           <Text style={styles.cell}></Text>
-           <Text style={styles.cell}></Text>
-           <Text style={styles.cell}></Text>
-           <Text style={styles.cell}></Text>
-           <Text style={styles.cell}></Text>
-           <Text style={styles.cell}>Total Expense</Text>
-           <Text style={styles.cell}></Text>
-           <Text style={styles.cell}>{totalExpense}</Text>
-           <Text style={styles.cell}></Text>
-         </View>
-       </View>
-     </Page>
-   </Document>
- );
-
- // 🔹 Download
- const handleDownloadPDF = async () => {
-   const blob = await pdf(MyPDFDoc).toBlob();
-   saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
+  // Generate PDF for all filtered entries
+ const generatePDFBlob = async () => {
+   const blob = await pdf(
+     <MyPDFDoc
+       entries={filteredEntries} // ✅ use filteredEntries instead
+       page={page}
+       totalExpense={totalExpense}
+     />
+   ).toBlob();
+   setPdfBlob(blob);
+   setPdfBlobUrl(URL.createObjectURL(blob));
+   return blob;
  };
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 
-  
+  // 🔹 PDF Doc
+  // --- PDF Document Component ---
+  const MyPDFDoc = ({ entries, page, totalExpense }) => (
+    <Document>
+      <Page size="A4" orientation="landscape" style={styles.page}>
+        <Text style={styles.header}>All Transactions</Text>
+        <Text>Date: {new Date().toLocaleDateString("en-GB")}</Text>
+
+        <View style={styles.table}>
+          {/* Header Row */}
+          <View style={styles.row}>
+            {[
+              "#",
+              "Date",
+              "Remarks",
+              "Category",
+              "Type",
+              "Division",
+              "Details",
+              "Pmt Mode",
+              "Expense",
+              "Balance",
+            ].map((h, i) => (
+              <Text key={i} style={[styles.cell, styles.headerCell]}>
+                {h}
+              </Text>
+            ))}
+          </View>
+
+          {/* Body Rows */}
+          {entries.map((e, i) => (
+            <View key={i} style={styles.row}>
+              <Text style={styles.cell}>
+                {(page - 1) * ITEMS_PER_PAGE + i + 1}
+              </Text>
+              <Text style={styles.cell}>
+                {new Date(e.date).toLocaleDateString("bn-BD")}
+              </Text>
+              <Text style={styles.cell}>{e.remarks || "-"}</Text>
+              <Text style={styles.cell}>{e.category || "-"}</Text>
+              <Text style={styles.cell}>{e.type || "-"}</Text>
+              <Text style={styles.cell}>{e.division || "-"}</Text>
+              <Text style={styles.cell}>{e.details || "-"}</Text>
+              <Text style={styles.cell}>{e.mode || "-"}</Text>
+              <Text style={styles.cell}>{e.amount || "-"}</Text>
+              <Text style={styles.cell}>{e.expense || "-"}</Text>
+            </View>
+          ))}
+
+          {/* Footer */}
+          <View style={styles.row}>
+            <Text style={styles.cell}></Text>
+            <Text style={styles.cell}></Text>
+            <Text style={styles.cell}></Text>
+            <Text style={styles.cell}></Text>
+            <Text style={styles.cell}></Text>
+            <Text style={styles.cell}></Text>
+            <Text style={styles.cell}>Total Expense</Text>
+            <Text style={styles.cell}></Text>
+            <Text style={styles.cell}>{totalExpense}</Text>
+            <Text style={styles.cell}></Text>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewData, setPreviewData] = useState([]);
+  // 🔹 Download
+
+  // Open PDF in browser tab (mobile)
+
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const handleOpenInBrowser = async () => {
+    if (!pdfBlobUrl) await generatePDFBlob(); // uses filteredEntries
+    window.open(pdfBlobUrl, "_blank");
+  };
+
+  const handleDownloadPDF = async () => {
+    const blob = pdfBlob || (await generatePDFBlob());
+    saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
+  };
 
   const preparePreview = () => {
     const worksheetData = paginatedEntries.map((e, i) => ({
@@ -341,7 +357,6 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       // Balance: "",
       Balance: "", // Total amount aligned under Expenses column
     });
-
 
     setPreviewData(worksheetData);
     setPreviewVisible(true);
@@ -448,13 +463,10 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
           className="btn-outline btn btn-sm"
           onClick={async () => {
             if (isMobile) {
-              // Mobile → generate + open externally
-              const blob = await pdf(MyPDFDoc).toBlob();
-              const url = URL.createObjectURL(blob);
-              window.open(url); // opens in Google Drive, Adobe, etc.
+              setShowPDFPreview(true); // 📱 show modal with open/download options
             } else {
-              // Desktop → show preview modal
-              setShowPDFPreview(true);
+              await generatePDFBlob();
+              setShowPDFPreview(true); // 🖥️ desktop preview
             }
           }}
         >
@@ -579,21 +591,47 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         />
       )}
       {/* PDF Preview Modal */}
-      {showPDFPreview && !isMobile && (
+      {showPDFPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
-          <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
-            <PDFViewer width="100%" height="100%">
-              {MyPDFDoc}
-            </PDFViewer>
-            <div className="right-10 bottom-10 absolute flex justify-end gap-2">
+          <div className="relative flex flex-col bg-white p-4 rounded-lg w-full max-w-5xl h-[90vh]">
+            <h3 className="mb-2 font-bold text-lg">📄 Transactions Report</h3>
+
+            {!isMobile ? (
+              <PDFViewer width="100%" height="100%">
+                <MyPDFDoc
+                  entries={paginatedEntries}
+                  page={page}
+                  totalExpense={totalExpense}
+                />
+              </PDFViewer>
+            ) : (
+              <p className="flex-1 text-gray-600 text-sm">
+                On mobile, preview is not supported. Please choose{" "}
+                <b>Open in Browser Tab</b> or <b>Download PDF</b>.
+              </p>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-2 mt-4">
+              {isMobile && (
+                <button
+                  className="btn btn-info btn-sm"
+                  onClick={handleOpenInBrowser}
+                >
+                  🌐 Open in Browser Tab
+                </button>
+              )}
               <button
-                className="btn-active btn"
+                className="btn btn-success btn-sm"
+                onClick={handleDownloadPDF}
+              >
+                📥 Download PDF
+              </button>
+              <button
+                className="btn-outline btn btn-sm"
                 onClick={() => setShowPDFPreview(false)}
               >
                 Close
-              </button>
-              <button className="btn btn-primary" onClick={handleDownloadPDF}>
-                Download
               </button>
             </div>
           </div>

@@ -160,17 +160,29 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
 
 
 
-  const handleOpenInApp = async () => {
+  // const handleOpenInApp = async () => {
+  //   if (!pdfBlobUrl) {
+  //     const blob = await pdf(PDFDocument()).toBlob();
+  //     const url = URL.createObjectURL(blob);
+  //     setPdfBlobUrl(url);
+  //     window.open(url, "_blank");
+  //   } else {
+  //     window.open(pdfBlobUrl, "_blank");
+  //   }
+  //   setShowPDFModal(false);
+  // };
+  const handleOpenInBrowser = async () => {
     if (!pdfBlobUrl) {
       const blob = await pdf(PDFDocument()).toBlob();
       const url = URL.createObjectURL(blob);
       setPdfBlobUrl(url);
-      window.open(url, "_blank");
+      window.open(url, "_blank"); // 👉 Opens in new browser tab
     } else {
       window.open(pdfBlobUrl, "_blank");
     }
     setShowPDFModal(false);
   };
+
 
 
   // ✅ Excel Actions
@@ -268,15 +280,21 @@ const MemberDetailsModal = ({ member, onClose, refetch }) => {
               {/* Actions */}
               <div className="flex justify-end gap-2">
                 {isMobile && (
-                  <button className="btn btn-info" onClick={handleOpenInApp}>
-                    📂 Open in App
+                  // <button className="btn btn-info" onClick={handleOpenInApp}>
+                  //   📂 Open in App
+                  // </button>
+                  <button
+                    className="btn btn-info btn-sm"
+                    onClick={handleOpenInBrowser}
+                  >
+                    🌐 Open in Browser Tab
                   </button>
                 )}
-                <button className="btn btn-success" onClick={handleDownloadPDF}>
+                <button className="btn btn-success btn-sm" onClick={handleDownloadPDF}>
                   📥 Download PDF
                 </button>
                 <button
-                  className="btn-outline btn"
+                  className="btn-outline btn btn-sm"
                   onClick={() => setShowPDFModal(false)}
                 >
                   Close

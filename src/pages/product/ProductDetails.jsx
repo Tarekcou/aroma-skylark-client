@@ -1,16 +1,13 @@
-// src/pages/products/ProductDetails.jsx
 import { useNavigate, useParams } from "react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axiosPublic from "../../axios/AxiosPublic";
 import { useState } from "react";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
-import { MdArrowBack, MdBackHand, MdFileUploadOff } from "react-icons/md";
+import { MdArrowBack } from "react-icons/md";
 import { FaFileExcel, FaFilePdf } from "react-icons/fa";
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";// <- default import
 import {
   Document,
   Page,
@@ -31,11 +28,7 @@ Font.register({
 });
 
 const styles = StyleSheet.create({
-  page: {
-    fontFamily: "NotoSansBengali",
-    padding: 20,
-    fontSize: 10,
-  },
+  page: { fontFamily: "NotoSansBengali", padding: 20, fontSize: 10 },
   table: {
     display: "table",
     width: "auto",
@@ -44,9 +37,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 0,
     borderBottomWidth: 0,
   },
-  row: {
-    flexDirection: "row",
-  },
+  row: { flexDirection: "row" },
   cell: {
     borderStyle: "solid",
     borderWidth: 1,
@@ -61,20 +52,40 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontWeight: "bold",
   },
-  content: {
-    fontSize: 12,
-    lineHeight: 1.5,
-  },
-  headerCell: {
-    backgroundColor: "#f0f0f0",
-    fontWeight: "bold",
-  },
+  headerCell: { backgroundColor: "#f0f0f0", fontWeight: "bold" },
 });
+
+const MyPDFDoc = ({ logs = [], productName = "" }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <Text style={styles.header}>{productName} - Stock Logs</Text>
+      <View style={[styles.table, { marginBottom: 5 }]}>
+        <View style={styles.row}>
+          {["Date", "Type", "Quantity", "Remarks", "Stock"].map((header) => (
+            <Text key={header} style={[styles.cell, styles.headerCell]}>
+              {header}
+            </Text>
+          ))}
+        </View>
+        {logs.map((log, idx) => (
+          <View key={idx} style={styles.row}>
+            <Text style={styles.cell}>{log.date || "-"}</Text>
+            <Text style={styles.cell}>{log.type || "-"}</Text>
+            <Text style={styles.cell}>{log.quantity ?? "-"}</Text>
+            <Text style={styles.cell}>{log.remarks || "-"}</Text>
+            <Text style={styles.cell}>{log.balance ?? "-"}</Text>
+          </View>
+        ))}
+      </View>
+    </Page>
+  </Document>
+);
 
 const ProductDetails = () => {
   const { id } = useParams();
   const qc = useQueryClient();
   const navigate = useNavigate();
+
   const [range, setRange] = useState({ from: "", to: "" });
   const [form, setForm] = useState({
     type: "in",
@@ -82,15 +93,19 @@ const ProductDetails = () => {
     remarks: "",
     date: new Date().toISOString().slice(0, 10),
   });
-  const [editing, setEditing] = useState(null); // index being edited
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
-  const [showExcelPreview, setShowExcelPreview] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [editData, setEditData] = useState({
     type: "in",
     quantity: "",
     remarks: "",
     date: "",
   });
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+  const [pdfBlob, setPdfBlob] = useState(null);
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [showExcelPreview, setShowExcelPreview] = useState(false);
+
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   const {
     data: product,
@@ -159,62 +174,38 @@ const ProductDetails = () => {
       date: log.date ? new Date(log.date).toISOString().slice(0, 10) : "",
     });
   };
-  // Inside ProductDetails.jsx
-const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  const MyPDFDoc = ({ logs, productName }) => (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        <Text style={styles.header}>{productName} - Stock Logs</Text>
-
-        {/* Table Header */}
-        <View style={[styles.table, { marginBottom: 5 }]}>
-          <View style={styles.row}>
-            {["Date", "Type", "Quantity", "Remarks", "Stock"].map((header) => (
-              <Text key={header} style={[styles.cell, styles.headerCell]}>
-                {header}
-              </Text>
-            ))}
-          </View>
-
-          {/* Table Rows */}
-          {logs.map((log, idx) => (
-            <View key={idx} style={styles.row}>
-              <Text style={styles.cell}>{log.date}</Text>
-              <Text style={styles.cell}>{log.type}</Text>
-              <Text style={styles.cell}>{log.quantity}</Text>
-              <Text style={styles.cell}>{log.remarks}</Text>
-              <Text style={styles.cell}>{log.balance}</Text>
-            </View>
-          ))}
-        </View>
-      </Page>
-    </Document>
-  );
-
-  
-  const handleDownloadPDF = async () => {
+  const generatePDFBlob = async () => {
     const blob = await pdf(
-      <MyPDFDoc logs={product.logs} productName={product.name} />
+      <MyPDFDoc logs={product.logs || []} productName={product.name || ""} />
     ).toBlob();
-    saveAs(blob, `${product.name}-stock-logs.pdf`);
+    setPdfBlob(blob);
+    setPdfBlobUrl(URL.createObjectURL(blob));
+    return blob;
   };
 
+  const handleOpenInBrowser = async () => {
+    if (!pdfBlobUrl) await generatePDFBlob();
+    window.open(pdfBlobUrl, "_blank");
+  };
 
-  const exportExcel = (logs, productName) => {
+  const handleDownloadPDF = async () => {
+    const blob = pdfBlob || (await generatePDFBlob());
+    saveAs(blob, `transactions_${new Date().toISOString().split("T")[0]}.pdf`);
+  };
+
+  const exportExcel = (logs = [], productName = "") => {
     const worksheet = XLSX.utils.json_to_sheet(
       logs.map((log) => ({
         Date: log.date,
         Type: log.type,
         Quantity: log.quantity,
         Remarks: log.remarks,
-        Stock: log.balance, // Assuming balance is the stock after this transaction
+        Stock: log.balance,
       }))
     );
-
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Stock Logs");
-
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
@@ -222,8 +213,6 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
     saveAs(data, `${productName}-stock-logs.xlsx`);
   };
-
-
   return (
     <div className="space-y-4 md:p-4">
       {/* Product summary */}
@@ -313,13 +302,10 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             className="btn-outline btn btn-sm"
             onClick={async () => {
               if (isMobile) {
-                // Mobile → generate + open externally
-                const blob = await pdf(MyPDFDoc).toBlob();
-                const url = URL.createObjectURL(blob);
-                window.open(url); // opens in Google Drive, Adobe, etc.
+                setShowPDFPreview(true); // 📱 show modal with open/download options
               } else {
-                // Desktop → show preview modal
-                setShowPDFPreview(true);
+                await generatePDFBlob();
+                setShowPDFPreview(true); // 🖥️ desktop preview
               }
             }}
           >
@@ -570,35 +556,55 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
           </tbody>
         </table>
       </div>
-      {/* 🔹 PDF Preview Modal */}
-      {showPDFPreview && !isMobile && (
+      {showPDFPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
-          <div className="bg-white p-2 rounded-lg w-full h-[90vh]">
-            <PDFViewer width="100%" height="100%">
-              <MyPDFDoc logs={product.logs} productName={product.name} />
-            </PDFViewer>
-
-            <div className="right-10 bottom-10 absolute flex justify-end gap-2">
+          <div className="relative flex flex-col bg-white p-4 rounded-lg w-full max-w-5xl h-[90vh]">
+            <h3 className="mb-2 font-bold text-lg">📄 Transactions Report</h3>
+            {!isMobile ? (
+              <PDFViewer width="100%" height="100%">
+                <MyPDFDoc
+                  logs={product.logs || []}
+                  productName={product.name || ""}
+                />
+              </PDFViewer>
+            ) : (
+              <p className="flex-1 text-gray-600 text-sm">
+                On mobile, preview is not supported. Please choose{" "}
+                <b>Open in Browser Tab</b> or <b>Download PDF</b>.
+              </p>
+            )}
+            <div className="flex justify-end gap-2 mt-4">
+              {isMobile && (
+                <button
+                  className="btn btn-info btn-sm"
+                  onClick={handleOpenInBrowser}
+                >
+                  🌐 Open in Browser Tab
+                </button>
+              )}
               <button
-                className="btn-active btn"
+                className="btn btn-success btn-sm"
+                onClick={handleDownloadPDF}
+              >
+                📥 Download PDF
+              </button>
+              <button
+                className="btn-outline btn btn-sm"
                 onClick={() => setShowPDFPreview(false)}
               >
                 Close
-              </button>
-              <button className="btn btn-primary" onClick={handleDownloadPDF}>
-                Download
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* 🔹 Excel Preview Modal */}
+      {/* Excel Preview Modal */}
       {showExcelPreview && (
         <div className="z-50 fixed inset-0 flex justify-center items-center bg-black/70 p-4">
           <div className="relative bg-white shadow-lg p-4 rounded-lg w-full max-w-4xl h-[90vh] overflow-auto">
             <h2 className="mb-4 font-bold text-lg">
-              {product.name} - Stock Logs (Excel Preview)
+              {product.name || ""} - Stock Logs (Excel Preview)
             </h2>
             <table className="table table-zebra border w-full text-sm">
               <thead>
@@ -624,7 +630,6 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
                 ))}
               </tbody>
             </table>
-
             <div className="right-3 bottom-3 absolute flex gap-2">
               <button
                 className="btn"
